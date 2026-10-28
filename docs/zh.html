@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silu — Rust 的速度，Z3 的证明</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.7}
+.container{max-width:1100px;margin:0 auto;padding:0 2rem}
+.hero{text-align:center;padding:7rem 2rem 5rem;background:linear-gradient(180deg,#161b22 0%,#0d1117 100%)}
+.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:-.03em;margin-bottom:1rem}
+.hero h1 .accent{color:var(--accent)}
+.hero p.tagline{font-size:clamp(1.1rem,2.5vw,1.5rem);color:var(--dim);max-width:750px;margin:0 auto 2.5rem}
+.badges{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem}
+.badge{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;border-radius:9999px;border:1px solid var(--border);background:var(--card);font-size:.95rem;color:var(--fg);text-decoration:none;transition:border-color .2s}
+.badge:hover{border-color:var(--accent)}
+.badge .label{color:var(--dim);font-size:.8rem}
+.badge .value{font-weight:600;color:var(--accent)}
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg)}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
+section{padding:4rem 0}
+section h2{font-size:1.8rem;margin-bottom:2rem;letter-spacing:-.02em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.8rem}
+.card h3{font-size:1.1rem;margin-bottom:.7rem;color:var(--accent)}
+.card p{color:var(--dim);font-size:.95rem}
+.code-block{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.5rem;font-family:'SF Mono',Consolas,monospace;font-size:.85rem;overflow-x:auto;margin:1.5rem 0;line-height:1.7}
+.code-block .prompt{color:var(--dim)}
+.code-block .kw{color:#ff7b72}
+.code-block .str{color:#a5d6ff}
+.code-block .num{color:#d2a8ff}
+.code-block .fn{color:#d2a8ff}
+.code-block .ok{color:var(--accent2)}
+.code-block .err{color:#f85149}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{text-align:left;padding:.7rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
+td{padding:.6rem 1rem;border-bottom:1px solid var(--border)}
+td.speedup{font-weight:600;color:var(--accent2)}
+td.slower{color:#e3b341}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin:2.5rem 0}
+.stat{text-align:center;padding:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.stat .num{font-size:2.2rem;font-weight:800;color:var(--accent)}
+.stat .label{font-size:.85rem;color:var(--dim);margin-top:.4rem}
+.feature{display:flex;gap:1.2rem;margin-bottom:1.8rem}
+.feature-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(88,166,255,.1);flex-shrink:0}
+.feature h3{margin-bottom:.4rem;font-size:1.05rem}
+.feature p{color:var(--dim);font-size:.92rem}
+footer{padding:3rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border)}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="lang-switch">
+  <a href="./">EN</a>
+  <a href="zh.html" class="active">中文</a>
+</div>
+
+<div class="hero">
+  <div class="container">
+    <h1>Silu<span class="accent">.</span></h1>
+    <p class="tagline">编译型语言——运行速度与 <strong>Rust</strong> 持平，并能<strong>证明自己的代码不会崩溃</strong>。</p>
+    <div class="badges">
+      <a class="badge" href="#benchmarks"><span class="label">vs Rust</span> <span class="value">1.0×</span></a>
+      <a class="badge" href="#prover"><span class="label">证明器</span> <span class="value">Z3</span></a>
+      <a class="badge" href="#selfhost"><span class="label">自举</span> <span class="value">25秒</span></a>
+      <a class="badge" href="#compile"><span class="label">编译</span> <span class="value">0.11s</span></a>
+    </div>
+  </div>
+</div>
+
+<section id="benchmarks">
+  <div class="container">
+    <h2>性能基准</h2>
+    <div class="stat-row">
+      <div class="stat"><div class="num">1.0×</div><div class="label">vs Rust（几何平均）</div></div>
+      <div class="stat"><div class="num">14×</div><div class="label">vs CPython</div></div>
+      <div class="stat"><div class="num">500×</div><div class="label">vs 参考解释器</div></div>
+    </div>
+    <div class="table-wrap">
+    <table>
+      <tr><th>程序</th><th>Silu 原生</th><th>Rust</th><th>vs Rust</th></tr>
+      <tr><td>wordcount（词频统计）</td><td>8.8ms</td><td>15.3ms</td><td class="speedup">1.8×</td></tr>
+      <tr><td>dict（字典操作）</td><td>2.2ms</td><td>2.8ms</td><td class="speedup">1.3×</td></tr>
+      <tr><td>knucleotide（DNA 序列）</td><td>11.0ms</td><td>14.8ms</td><td class="speedup">1.3×</td></tr>
+      <tr><td>mandelbrot（分形渲染）</td><td>2.4ms</td><td>2.7ms</td><td class="speedup">1.2×</td></tr>
+      <tr><td>fib（递归斐波那契）</td><td>2.5ms</td><td>2.8ms</td><td class="speedup">1.1×</td></tr>
+      <tr><td>spectral（范数计算）</td><td>4.2ms</td><td>4.4ms</td><td class="speedup">1.05×</td></tr>
+      <tr><td>arith（算术循环）</td><td>3.3ms</td><td>3.4ms</td><td class="speedup">1.03×</td></tr>
+      <tr><td>list（链表操作）</td><td>2.4ms</td><td>2.4ms</td><td>1.0×</td></tr>
+      <tr><td>jsonparse（JSON 解析）</td><td>8.7ms</td><td>6.4ms</td><td class="slower">0.7×</td></tr>
+    </table>
+    </div>
+    <p style="color:var(--dim);margin-top:1rem;font-size:.85rem">15 个程序，所有输出在六个平面（解释器 / CPython / 原生编译 / Rust / C / 自举解释器）上逐字节一致。完整方法论文档：<a href="benchmarks.md">benchmarks.md</a></p>
+  </div>
+</section>
+
+<section id="prover" style="background:var(--card)">
+  <div class="container">
+    <h2>证明器</h2>
+    <div class="grid">
+      <div>
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <div>
+            <h3>真正的证明，不是采样</h3>
+            <p><code>a / (b*b + 1)</code> 被证明安全——Z3 通过代数推理得出除数恒 ≥ 1，覆盖<strong>所有</strong>可能的输入。</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🎯</div>
+          <div>
+            <h3>真实 bug 的反例</h3>
+            <p><code>m / (n - n)</code> 被标记为可达崩溃，并给出触发输入——因为除数恒等于零。你拿到的是具体的崩溃参数，不只是警告。</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔗</div>
+          <div>
+            <h3>契约可组合</h3>
+            <p><code>require(b != 0)</code> 声明函数的定义域。函数<strong>独立</strong>证明安全；调用点另行检查是否尊重契约。删除任何调用方不会影响函数自身的证明。</p>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+<div><span class="prompt">$</span> cat safe.si</div>
+<div><span class="kw">def</span> <span class="fn">safe_div</span>(a: <span class="num">int</span>, b: <span class="num">int</span>) -> <span class="num">int</span>:</div>
+<div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">require</span>(b != 0)</div>
+<div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> a / b</div>
+<div>&nbsp;</div>
+<div><span class="prompt">$</span> silu prove safe.si</div>
+<div><span class="ok">safe_div: ok (1 checked abort site(s) proved safe)</span></div>
+<div><span class="ok">verify: ok - no abort reachable</span></div>
+<div>&nbsp;</div>
+<div><span class="prompt">$</span> cat buggy.si</div>
+<div><span class="kw">def</span> <span class="fn">risky</span>(m: <span class="num">int</span>, n: <span class="num">int</span>) -> <span class="num">int</span>:</div>
+<div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> m / (n - n)</div>
+<div>&nbsp;</div>
+<div><span class="prompt">$</span> silu prove buggy.si</div>
+<div><span class="err">risky: POSSIBLE ABORT - division by zero</span></div>
+<div><span class="err">verify: ABORT REACHABLE</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="selfhost">
+  <div class="container">
+    <h2>自举编译器</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>编译器用 Silu 自己写的</h3>
+        <p>词法分析、语法分析、IR 生成器、LLVM 代码生成——全部用 Silu 编写，并被自身编译为原生二进制。不动点证明（自举转换器逐字节复现自己的构建输出）在测试套件中持续运行。</p>
+      </div>
+      <div class="card">
+        <h3>一条命令完成自举</h3>
+        <p><code>silu bootstrap</code> 从源码构建零 Python 工具链，约 25 秒。之后每次编译只需 <code>./siluc file.si -o prog</code>——0.11 秒，默认 LTO。</p>
+      </div>
+      <div class="card">
+        <h3>无 GC，无借用检查器</h3>
+        <p>静态类型注解决定内存表示：<code>int</code> 留在栈上，<code>str</code> 使用 Rust String 风格的独占缓冲，容器使用无装箱的原始存储。纪律在编译器里，不在程序员身上。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="compile" style="background:var(--card)">
+  <div class="container">
+    <h2>极速编译</h2>
+    <div class="stat-row">
+      <div class="stat"><div class="num">0.11s</div><div class="label">siluc（默认 LTO）</div></div>
+      <div class="stat"><div class="num">0.13s</div><div class="label">rustc（release）</div></div>
+      <div class="stat"><div class="num">25s</div><div class="label">一次性自举</div></div>
+    </div>
+    <div class="code-block">
+<div><span class="prompt">$</span> ./siluc hello.si -o hello</div>
+<div><span class="ok">✓ 0.11 秒编译完成（LTO）</span></div>
+<div><span class="prompt">$</span> ./hello</div>
+<div><span class="ok">Hello, Silu!</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>Silu — <a href="https://github.com/askender/silu-lang">GitHub</a> — 文档：<a href="benchmarks.md">基准测试</a> · <a href="memory.md">内存设计</a> · <a href="rfc_sum_types.md">Sum Type RFC</a> · <a href="symbolic_roadmap.md">符号执行路线图</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

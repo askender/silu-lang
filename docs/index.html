@@ -7,7 +7,7 @@
 <style>
 :root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
 .container{max-width:1100px;margin:0 auto;padding:0 2rem}
 .hero{text-align:center;padding:7rem 2rem 5rem;background:linear-gradient(180deg,#161b22 0%,#0d1117 100%)}
 .hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:-.03em;margin-bottom:1rem}
@@ -18,6 +18,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,san
 .badge:hover{border-color:var(--accent)}
 .badge .label{color:var(--dim);font-size:.8rem}
 .badge .value{font-weight:600;color:var(--accent)}
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg)}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
 section{padding:4rem 0}
 section h2{font-size:1.8rem;margin-bottom:2rem;letter-spacing:-.02em}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
@@ -53,6 +57,11 @@ a:hover{text-decoration:underline}
 </head>
 <body>
 
+<div class="lang-switch">
+  <a href="./" class="active">EN</a>
+  <a href="zh.html">中文</a>
+</div>
+
 <div class="hero">
   <div class="container">
     <h1>Silu<span class="accent">.</span></h1>
@@ -72,7 +81,7 @@ a:hover{text-decoration:underline}
     <div class="stat-row">
       <div class="stat"><div class="num">1.0×</div><div class="label">vs Rust (geometric mean)</div></div>
       <div class="stat"><div class="num">14×</div><div class="label">vs CPython</div></div>
-      <div class="stat"><div class="num">500×</div><div="label">vs reference interpreter</div></div>
+      <div class="stat"><div class="num">500×</div><div class="label">vs reference interpreter</div></div>
     </div>
     <div class="table-wrap">
     <table>
@@ -88,7 +97,7 @@ a:hover{text-decoration:underline}
       <tr><td>jsonparse</td><td>8.7ms</td><td>6.4ms</td><td class="slower">0.7×</td></tr>
     </table>
     </div>
-    <p style="color:var(--dim);margin-top:1rem;font-size:.85rem">15 programs, all outputs verified byte-identical across six planes (interpreter, CPython, native, Rust, C, self-hosted interpreter). Full methodology: <a href="docs/benchmarks.md">docs/benchmarks.md</a></p>
+    <p style="color:var(--dim);margin-top:1rem;font-size:.85rem">15 programs, all outputs verified byte-identical across six planes. Full methodology: <a href="benchmarks.md">benchmarks.md</a></p>
   </div>
 </section>
 
@@ -108,7 +117,7 @@ a:hover{text-decoration:underline}
           <div class="feature-icon">🎯</div>
           <div>
             <h3>Witnesses for real bugs</h3>
-            <p><code>m / (n - n)</code> is flagged with a counterexample — the divisor is identically zero. You get the input that crashes, not just a warning.</p>
+            <p><code>m / (n - n)</code> is flagged with a counterexample — the divisor is identically zero. You get the crashing input, not just a warning.</p>
           </div>
         </div>
         <div class="feature">
@@ -151,7 +160,7 @@ a:hover{text-decoration:underline}
       </div>
       <div class="card">
         <h3>One command bootstrap</h3>
-        <p><code>silu bootstrap</code> builds the zero-Python toolchain from source in ~25 seconds. After that, every compile is <code>./siluc file.si -o prog</code> — 0.11 seconds, LTO by default, no Python anywhere in the pipeline.</p>
+        <p><code>silu bootstrap</code> builds the zero-Python toolchain from source in ~25 seconds. After that, every compile is <code>./siluc file.si -o prog</code> — 0.11 seconds, LTO by default.</p>
       </div>
       <div class="card">
         <h3>Memory without GC or borrow checker</h3>
@@ -180,7 +189,7 @@ a:hover{text-decoration:underline}
 
 <footer>
   <div class="container">
-    <p>Silu — <a href="https://github.com/askender/silu-lang">GitHub</a> — documentation: <a href="docs/benchmarks.md">benchmarks</a> · <a href="docs/memory.md">memory</a> · <a href="docs/rfc_sum_types.md">sum types</a> · <a href="docs/symbolic_roadmap.md">symbolic roadmap</a></p>
+    <p>Silu — <a href="https://github.com/askender/silu-lang">GitHub</a> — docs: <a href="benchmarks.md">benchmarks</a> · <a href="memory.md">memory</a> · <a href="rfc_sum_types.md">sum types</a> · <a href="symbolic_roadmap.md">symbolic roadmap</a></p>
   </div>
 </footer>
 
