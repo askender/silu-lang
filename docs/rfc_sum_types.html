@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sum Types RFC — Silu</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+.container{max-width:1100px;margin:0 auto;padding:0 2rem}
+.hero{text-align:center;padding:7rem 2rem 5rem;background:linear-gradient(180deg,#161b22 0%,#0d1117 100%)}
+.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:-.03em;margin-bottom:1rem}
+.hero h1 .accent{color:var(--accent)}
+.hero p.tagline{font-size:clamp(1.1rem,2.5vw,1.5rem);color:var(--dim);max-width:700px;margin:0 auto 2.5rem}
+.badges{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem}
+.badge{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;border-radius:9999px;border:1px solid var(--border);background:var(--card);font-size:.95rem;color:var(--fg);text-decoration:none;transition:border-color .2s}
+.badge:hover{border-color:var(--accent)}
+.badge .label{color:var(--dim);font-size:.8rem}
+.badge .value{font-weight:600;color:var(--accent)}
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg)}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
+section{padding:4rem 0}
+section h2{font-size:1.8rem;margin-bottom:2rem;letter-spacing:-.02em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.8rem}
+.card h3{font-size:1.1rem;margin-bottom:.7rem;color:var(--accent)}
+.card p{color:var(--dim);font-size:.95rem}
+.code-block{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.5rem;font-family:'SF Mono',Consolas,monospace;font-size:.85rem;overflow-x:auto;margin:1.5rem 0;line-height:1.7}
+.code-block .prompt{color:var(--dim)}
+.code-block .kw{color:#ff7b72}
+.code-block .str{color:#a5d6ff}
+.code-block .num{color:#d2a8ff}
+.code-block .fn{color:#d2a8ff}
+.code-block .ok{color:var(--accent2)}
+.code-block .err{color:#f85149}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{text-align:left;padding:.7rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
+td{padding:.6rem 1rem;border-bottom:1px solid var(--border)}
+td.speedup{font-weight:600;color:var(--accent2)}
+td.slower{color:#e3b341}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin:2.5rem 0}
+.stat{text-align:center;padding:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.stat .num{font-size:2.2rem;font-weight:800;color:var(--accent)}
+.stat .label{font-size:.85rem;color:var(--dim);margin-top:.4rem}
+.feature{display:flex;gap:1.2rem;margin-bottom:1.8rem}
+.feature-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(88,166,255,.1);flex-shrink:0}
+.feature h3{margin-bottom:.4rem;font-size:1.05rem}
+.feature p{color:var(--dim);font-size:.92rem}
+footer{padding:3rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border)}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap}
+.md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
+.md-nav a:hover{color:var(--fg);border-color:var(--accent)}
+.md-nav a.home{color:var(--accent);font-weight:600}
+.md-body{max-width:920px;margin:0 auto;padding:5.5rem 2rem 4rem}
+.md-body h1{font-size:2rem;margin-bottom:1.5rem;color:var(--accent);letter-spacing:-.02em}
+.md-body h2{font-size:1.5rem;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.md-body h3{font-size:1.15rem;margin:2rem 0 .8rem}
+.md-body p{margin:.8rem 0;color:var(--fg)}
+.md-body li{margin:.4rem 0;color:var(--fg)}
+.md-body code{background:rgba(88,166,255,.1);color:var(--accent);padding:.15rem .4rem;border-radius:4px;font-family:'SF Mono',Consolas,monospace;font-size:.88em}
+.md-body pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.2rem;overflow-x:auto;margin:1.2rem 0}
+.md-body pre code{background:none;color:var(--fg);padding:0;font-size:.82rem;line-height:1.6}
+.md-body table{width:100%;border-collapse:collapse;font-size:.9rem;margin:1.5rem 0}
+.md-body th{text-align:left;padding:.6rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
+.md-body td{padding:.5rem 1rem;border-bottom:1px solid var(--border)}
+.md-body blockquote{border-left:3px solid var(--accent);padding:.8rem 1.2rem;margin:1.2rem 0;color:var(--dim);background:rgba(88,166,255,.05);border-radius:0 8px 8px 0}
+.md-body a{color:var(--accent);text-decoration:none}
+.md-body a:hover{text-decoration:underline}
+.md-body strong{color:var(--accent2)}
+.md-body hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+.md-body ul,.md-body ol{padding-left:1.5rem}
+</style>
+</head>
+<body>
+<div class="md-nav"><a href="./" class="home">🏠 Home</a><a href="benchmarks.html">Benchmarks</a><a href="memory.html">Memory</a><a href="rfc_sum_types.html">Sum Types</a><a href="symbolic_roadmap.html">Symbolic</a><a href="interop.html">Interop</a></div>
+<div class="lang-switch">
+  <a href="./" class="active">EN</a>
+  <a href="zh.html">中文</a>
+</div>
+<div class="md-body">
+<h1>RFC: Typed Sum Types (tagged unions) for heterogeneous containers</h1>
+<p>Status: draft for review (2026-10-27). Target: close the last
+benchmark gap (jsonparse 0.4x vs Rust) by giving heterogeneous
+containers a typed representation, and give the language the one
+Rust-core feature it still lacks next to move-class narrowing.</p>
+<h2>1. Problem</h2>
+<p><code>items: list</code> cannot be given a type parameter when the elements are
+mixed (int/str/list/dict in a JSON tree). Such containers stay pyobj:
+every element costs a <code>{tag, ptr}</code> box allocation, every read a tag
+check plus unbox, and container operations go through the dynamic
+list/dict runtime. jsonparse spends 6ms of its 10.7ms on this
+(pyobj construction is the residual vs Rust's serde_json::Value).</p>
+<p>The pyobj box is already a tagged union - the problem is that it is
+heap-allocated per value with a payload pointer indirection, and that
+containers holding it are fully dynamic. What is missing is a
+user-declarable sum type with a compact single-block layout and
+typed containers over it.</p>
+<h2>2. Proposed surface syntax</h2>
+<p>A union is declared with a new <code>union</code> statement (subclassing the
+established "no inheritance, annotated fields only" class model):</p>
+<div class="codehilite"><pre><span></span><code><span class="ow">union</span><span class="w"> </span><span class="nl">Json</span><span class="p">:</span>
+<span class="w">    </span><span class="k">null</span>
+<span class="w">    </span><span class="n">bool</span>
+<span class="w">    </span><span class="nc">int</span>
+<span class="w">    </span><span class="nc">float</span>
+<span class="w">    </span><span class="nf">str</span>
+<span class="w">    </span><span class="n">list</span><span class="o">[</span><span class="n">Json</span><span class="o">]</span>
+<span class="w">    </span><span class="n">dict</span><span class="o">[</span><span class="n">str, Json</span><span class="o">]</span>
+
+<span class="n">def</span><span class="w"> </span><span class="n">parse_value</span><span class="p">(</span><span class="nl">s</span><span class="p">:</span><span class="w"> </span><span class="nf">str</span><span class="p">,</span><span class="w"> </span><span class="nl">pos</span><span class="p">:</span><span class="w"> </span><span class="n">list</span><span class="o">[</span><span class="n">int</span><span class="o">]</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nl">Json</span><span class="p">:</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">[</span><span class="n">v for ...</span><span class="o">]</span><span class="w">          </span><span class="err">#</span><span class="w"> </span><span class="n">list</span><span class="o">[</span><span class="n">Json</span><span class="o">]</span><span class="w"> </span><span class="n">construction</span>
+
+<span class="n">def</span><span class="w"> </span><span class="n">sum_tree</span><span class="p">(</span><span class="nl">v</span><span class="p">:</span><span class="w"> </span><span class="n">Json</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nc">int</span><span class="err">:</span>
+<span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="nl">v</span><span class="p">:</span>
+<span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="nc">int</span><span class="err">:</span><span class="w">        </span><span class="err">#</span><span class="w"> </span><span class="n">narrow</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">unbox</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">one</span><span class="w"> </span><span class="n">branch</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="n">list</span><span class="o">[</span><span class="n">Json</span><span class="o">]</span><span class="err">:</span>
+<span class="w">            </span><span class="n">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nl">v</span><span class="p">:</span>
+<span class="w">                </span><span class="n">total</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">sum_tree</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">total</span>
+</code></pre></div>
+
+<ul>
+<li><code>union Name:</code> members are kinds, not fields. Members supported in
+  v1: <code>null</code>, <code>bool</code>, <code>int</code>, <code>float</code>, <code>str</code>, <code>list[T]</code>, <code>dict[K, V]</code>
+  where T/V may be the union itself (the recursive case JSON needs).</li>
+<li>The annotation <code>x: Json</code> / <code>list[Json]</code> / <code>dict[str, Json]</code> drives
+  everything downstream - same authority model as existing
+  annotations.</li>
+</ul>
+<h2>3. Representation</h2>
+<p>A value of union type is one heap block:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="n">i32</span><span class="w"> </span><span class="n">tag</span><span class="p">,</span><span class="w"> </span><span class="n">i64</span><span class="w"> </span><span class="n">payload</span><span class="p">}</span><span class="w">   </span><span class="c1"># 16 bytes, one malloc per value</span>
+</code></pre></div>
+
+<ul>
+<li>scalar members carry the value inline (bool as i1-in-i64, int i64,
+  float bits)</li>
+<li><code>str</code> carries a rawstr* in the payload (owned; freed recursively)</li>
+<li><code>list[T]</code> carries a rawlist-of-payload-pointer* (elements are
+  union blocks: <code>rawlist_tagged</code> - a new rawlist family whose element
+  width is 8 and whose slot owns each element block)</li>
+<li><code>dict[K, V]</code> carries a rawdict variant with tagged value pointers
+  (<code>rawdict_str_tagged</code> / <code>rawdict_int_tagged</code>)</li>
+</ul>
+<p>Tag numbering is declaration order, 0 = first member. The nullary
+member (<code>null</code>) needs no payload.</p>
+<p>This is serde_json::Value's design: enum + Box'd Vec/Map, except our
+containers reuse the existing rawlist/rawdict open-addressing
+machinery (the emitter families <code>_emit_rawlist_*</code> / <code>_emit_rawdict_*</code>
+grow two element families rather than a new container runtime).</p>
+<h2>4. Runtime surface (emitted, <code>_emit_tagged_*</code> family)</h2>
+<ul>
+<li><code>tagged_new_scalar(tag, bits) -&gt; blk*</code></li>
+<li><code>tagged_new_str(tag, rawstr*) -&gt; blk*</code></li>
+<li><code>tagged_new_list(tag, rawlist_tagged*) -&gt; blk*</code>   (dict same)</li>
+<li><code>tagged_tag(blk*) -&gt; i32</code></li>
+<li><code>tagged_bits(blk*) -&gt; i64</code>          (scalar unbox; narrow-verified)</li>
+<li><code>tagged_str(blk*) -&gt; rawstr*</code>       (borrowed read)</li>
+<li><code>tagged_list(blk*) -&gt; rawlist_tagged*</code> (borrowed read)</li>
+<li><code>tagged_free(blk*)</code>                 (recursive; JSON is a tree, no
+                                       cycles by construction)</li>
+<li><code>rawlist_tagged_push/get/set/clear</code> (slot owns blocks)</li>
+</ul>
+<p>Borrow discipline follows the v1.7.1 rules verbatim: reads are
+borrowed pointers, rebinding an owned slot frees the old block only
+when the slot is owned (<code>_owned_strs</code> generalizes to
+<code>_owned_tagged</code>), function-exit drops owned slots, borrowed
+parameters are never freed by the callee.</p>
+<h2>5. Codegen paths</h2>
+<ol>
+<li>IR: <code>union Json: ...</code> desugars to a class_def whose "fields" are
+   member descriptors; the front end records
+   <code>union_members["Json"] = [(name, member_kind), ...]</code>.</li>
+<li><code>_annotation_kind</code>: <code>Json</code> resolves to kind <code>"tagged:Json"</code> (new
+   kind family, carried as a string like the raw kinds);
+   <code>list[Json]</code> -&gt; <code>rawlist_tagged</code>, <code>dict[str, Json]</code> -&gt;
+   <code>rawdict_str_tagged</code>.</li>
+<li>Construction: a list literal with element kind tagged emits
+   per-element <code>tagged_new_*</code> + <code>rawlist_tagged</code> build (same shape as
+   the existing comprehension desugar).</li>
+<li>Narrowing: <code>match v: case int:</code> reuses the v1.7 match-class
+   narrowing - the case tests <code>tagged_tag</code> against the member's tag
+   constant, then the body sees <code>v</code> re-typed to the member kind
+   (scalar slots load <code>tagged_bits</code>, str slots <code>tagged_str</code>).</li>
+<li>Subscript/iteration over <code>list[Json]</code> yields kind <code>"tagged:Json"</code>
+   through the same <code>RAWLIST_KINDS</code> table used by the v1.11.3
+   subscript inference (one new row).</li>
+</ol>
+<h2>6. Staged delivery (byte-gate discipline)</h2>
+<ul>
+<li>S0 probe: hand-write the <code>tagged_new/tagged_tag/tagged_bits</code>
+  emitter + a 20-line .si using inline IR calls, measure a
+  construction loop vs pyobj. Go/no-go on &gt;=2x.</li>
+<li>S1 runtime: full <code>_emit_tagged_*</code> family + <code>rawlist_tagged</code>
+  element family (emitters only; corpus byte-identical since no
+  program reaches them).</li>
+<li>S2 front end + annotations: union parse, kind resolution,
+  construction/narrowing emission; new tests; corpus unchanged
+  (opt-in syntax).</li>
+<li>S3 four-plane: flatten/<code>.si</code> subset for any new dual-valid idioms;
+  fixed points rebuilt; jsonparse.si rewritten to the Json union
+  (benchmark change, output-verified against the pyobj version).</li>
+<li>S4 ownership audit: borrowed-read rules, exit drops, a
+  double-free probe test; symbolic invariant proof of
+  <code>tagged_free</code> acyclicity-by-construction (roadmap Phase 1 tie-in).</li>
+</ul>
+<h2>7c. S3 result (2026-10-28): landed on every plane, measured honestly</h2>
+<p>benchmarks/jsonparse_json.si - the full parser rewritten over the
+built-in Json type (blocks riding raw containers, json_* builtins,
+recursive json_free of the whole tree). All four planes agree on the
+87KB document, byte-identical to the class-based twin and to the
+Rust serde_json twin: 4498500 3000 22890 3000.</p>
+<p>The id/name "emission bug" from the S3 WIP was NOT an emission bug:
+tagged_dict_free read field 4 (the open-addressing TABLE - small
+entry indices!) as the value array; freeing table entries as block
+pointers segfaults exactly when a dict has two live keys. vals is
+field 6. One-line fix.</p>
+<p>Performance (official harness, this machine): class twin 8.9ms,
+Json twin 10.1ms - the Json version is NET 1.2ms SLOWER. The ~0.3ms
+construction saving (as the 7b measurement predicted) is outweighed
+by consumption-side costs the model missed: every read pays a
+tagged_tag dispatch plus a checked unwrap call (~25ns x thousands
+of reads). Expression-value completeness landed; performance parity
+with the class twin would need inline tag checks at narrow points -
+a separate, optional optimization.</p>
+<h2>7b. S1 benefit measurement (2026-10-27, tools/probes/s1_benefit.py)</h2>
+<p>With the REAL S1 emitters (not the S0 hand-rolled malloc shapes), a
+mixed construction probe matching jsonparse's value distribution
+(int + str + small array per group, values escaped to a global sink
+so clang cannot eliminate them):</p>
+<div class="codehilite"><pre><span></span><code>pyobj  (create_int + create_str + create_list + appends +
+        pyobj_make_instance):  ~47ns/value
+tagged (new_scalar + new_ptr + rawlist + wrap):   ~37ns/value
+ratio: 1.20x
+</code></pre></div>
+
+<p>Far below the S0 scalar-only 1.96x: str copies and container
+construction are shared costs. Re-projected for jsonparse: the
+construction share (~1.9ms) shrinks by ~20% = <strong>~0.3-0.4ms</strong>,
+taking 8.0ms to ~7.6ms - NOT enough to overtake Rust on its own.
+The J1 v_noinst delta (1.64ms) includes the CONSUMPTION side
+(class-pattern narrowing); the remaining gap needs a consumption-
+side attribution before more construction-side work. S2 proceeds
+for the expressive-completeness motivation (heterogeneous
+containers get a typed home), with performance expectations
+recorded honestly here.</p>
+<h2>7. Expected outcome - REVISED after S0 (2026-10-27)</h2>
+<p>S0 probe result (tools/probes/): tagged construction is <strong>1.96x</strong>
+faster than pyobj (93.4ms vs 47.7ms for 3M values, 11-run median) -
+meets the go bar on the construction loop itself.</p>
+<p>However, the same day's attribution study revised the jsonparse
+projection. Construction (instances + containers) is only ~12% of
+jsonparse's runtime (16.24ms full vs 14.60ms without instance
+wrapping vs 14.34ms without containers); the dominant cost is the
+per-character 1-byte str allocation of <code>ch = s[i]</code> (~62ns/char x 87k
+chars ~= 5.4ms, matching the whole 5.2ms gap to Rust; an ord()-
+rewrite probe scans 2.7x faster). So:</p>
+<ul>
+<li>Landing tagged unions alone moves jsonparse by ~0.9ms
+  (0.5x -&gt; ~0.55x), NOT the 1.0-1.2x originally projected here.</li>
+<li>The jsonparse gap's main lever is character-access
+  zero-allocation (extending RAWCHAR_VIEW emission to subscript
+  reads, <code>s[i] == "c"</code> comparison folding) - tracked separately.</li>
+<li>Tagged unions remain the right call for the language's expressive
+  completeness (heterogeneous containers get a typed home, all
+  parser/AST programs), and their 2x construction win compounds once
+  character access is fixed. Delivery order: character access first
+  (bigger, cheaper), tagged unions second.</li>
+</ul>
+<p>The original projection is kept below for the record:
+jsonparse: pyobj box (2 mallocs + payload indirection per value) -&gt;
+one 16-byte block (str leaves still need their data block) and
+typed containers. Prediction from the wordcount arithmetic (85ns -&gt;
+~27ns per eliminated box): 10.7ms -&gt; ~5-6ms, i.e. 1.0-1.2x vs the
+Rust serde_json baseline.</p>
+<h2>8. Risks / open questions</h2>
+<ul>
+<li>Representation freeze: 16-byte blocks are hard to change after
+  C-ABI export; keep <code>tagged_*</code> out of <code>@export</code> until S3 lands.</li>
+<li>Error mode: narrowing a wrong tag must abort loudly (same policy
+  as subscript bounds) - not return a default.</li>
+<li>Only one union per element type family in v1 (Json-shaped); user
+  unions with arbitrary members are deliberately phase 2.</li>
+<li>Recursive <code>dict[str, Json]</code> values inside rawdict need an owned-
+  slot clear hook (<code>rawdict_str_tagged_clear</code> frees value blocks) -
+  one more emitter, same recipe.</li>
+</ul>
+<h2>8b. S4 ownership audit (2026-10-28): reference model, explicit frees</h2>
+<p>Emitted-call census (static, in tests/test_tagged_ownership.py):
+every tagged_free in generated code enters through exactly ONE
+user-facing path - the json_free builtin - and the recursive trio
+(list_free -&gt; free -&gt; list_free, dict_free -&gt; free -&gt; dict_free)
+closes internally. No other emitter reaches a free.</p>
+<p>Ownership semantics, decided from the shape of the channels:</p>
+<ul>
+<li>Construction points (coerce wrapping of scalars/str/containers,
+  literal specials) each malloc a fresh block: OWNED at birth.</li>
+<li><code>y = x</code> on Json slots coerces JSON-&gt;JSON as the same tv: two slots
+  SHARE the block (Python reference semantics - unlike RAWSTR,
+  whose slot-to-slot coercion copies). Container reads (items[i],
+  o[k]) and json_list/json_dict results are BORROWED views into a
+  tree the tree itself owns.</li>
+<li>Therefore COMPILER-EMITTED per-slot drops are UNSOUND: a shared
+  block has no single owning slot, and a borrowed read must never
+  free. The S4 "exit drops" idea from the original staging is
+  formally rejected here.</li>
+</ul>
+<p>The model that ships: EXPLICIT free with move discipline. json_free
+is a move (the caller relinquishes; use-after-free is documented
+UB, same class as Rust's mem::forget + dangling). The FIRST slot a
+constructed tree lands in is its owner and owes the free; reads and
+pass-through assignments are observers. Un-freed trees are
+reclaimed at process exit (the pyobj discipline). Long-lived
+services free roots explicitly - the jsonparse_json.si twin shows
+the pattern (one json_free(data) tears the whole tree down, names
+kept as independent str copies stay alive).</p>
+<p>Future direction (not promised): a <code>unique</code> slot annotation or
+static owner inference could restore automatic drops; the reference
+semantics make that a breaking change, so it would be opt-in.</p>
+<h2>9. Non-goals</h2>
+<ul>
+<li>Generics over unions, C-ABI tagged exports, cycle collection
+  (union values are trees by construction).</li>
+</ul>
+</div>
+<footer>
+  <div class="container">
+    <p>Silu — <a href="https://github.com/askender/silu-lang">GitHub</a> — <a href="./">Back to home</a></p>
+  </div>
+</footer>
+</body>
+</html>
