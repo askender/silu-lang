@@ -2,7 +2,7 @@
 """Build bilingual (EN default / _zh) HTML doc pages from markdown sources.
 
 Convention: xxx.md is English, xxx_zh.md is Chinese. Each generated page
-carries the unified nav (Home + 5 docs, language-appropriate targets) and a
+carries the unified nav (Home + 7 docs, language-appropriate targets) and a
 per-page language toggle linking xxx.html <-> xxx_zh.html.
 """
 import html
@@ -12,6 +12,8 @@ import re
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 DOCS = [
+    ("language", "Language", "语言指南"),
+    ("semantics", "Semantics", "语义契约"),
     ("benchmarks", "Benchmarks", "性能评测"),
     ("memory", "Memory", "内存管理"),
     ("rfc_sum_types", "Sum Types RFC", "和类型 RFC"),
@@ -31,7 +33,7 @@ a:hover{text-decoration:underline}
 .lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
 .lang-switch a:hover{color:var(--fg);text-decoration:none}
 .lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
-.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap}
+.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap;max-width:calc(100vw - 9rem)}
 .md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
 .md-nav a:hover{color:var(--fg);border-color:var(--accent);text-decoration:none}
 .md-nav a.home{color:var(--accent);font-weight:600}

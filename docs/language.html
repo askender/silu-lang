@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Language — Silu</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg);text-decoration:none}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
+.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap;max-width:calc(100vw - 9rem)}
+.md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
+.md-nav a:hover{color:var(--fg);border-color:var(--accent);text-decoration:none}
+.md-nav a.home{color:var(--accent);font-weight:600}
+.md-body{max-width:920px;margin:0 auto;padding:5.5rem 2rem 4rem}
+.md-body h1{font-size:2rem;margin-bottom:1.5rem;color:var(--accent);letter-spacing:-.02em}
+.md-body h2{font-size:1.5rem;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.md-body h3{font-size:1.15rem;margin:2rem 0 .8rem}
+.md-body p{margin:.8rem 0;color:var(--fg)}
+.md-body li{margin:.4rem 0;color:var(--fg)}
+.md-body code{background:rgba(88,166,255,.1);color:var(--accent);padding:.15rem .4rem;border-radius:4px;font-family:'SF Mono',Consolas,monospace;font-size:.88em}
+.md-body pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.2rem;overflow-x:auto;margin:1.2rem 0}
+.md-body pre code{background:none;color:var(--fg);padding:0;font-size:.82rem;line-height:1.6}
+.md-body table{width:100%;border-collapse:collapse;font-size:.9rem;margin:1.5rem 0}
+.md-body th{text-align:left;padding:.6rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
+.md-body td{padding:.5rem 1rem;border-bottom:1px solid var(--border)}
+.md-body blockquote{border-left:3px solid var(--accent);padding:.8rem 1.2rem;margin:1.2rem 0;color:var(--dim);background:rgba(88,166,255,.05);border-radius:0 8px 8px 0}
+.md-body strong{color:var(--accent2)}
+.md-body hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+.md-body ul,.md-body ol{padding-left:1.5rem}
+footer{padding:2.5rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border);margin-top:2rem}
+.md-nav a.active-page{color:var(--accent);border-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="md-nav"><a href="./" class="home">🏠 Home</a><a href="language.html" class="active-page">Language</a><a href="semantics.html">Semantics</a><a href="benchmarks.html">Benchmarks</a><a href="memory.html">Memory</a><a href="rfc_sum_types.html">Sum Types RFC</a><a href="symbolic_roadmap.html">Symbolic Roadmap</a><a href="interop.html">C Interop</a></div>
+<div class="lang-switch">
+  <a href="language.html" class="active">EN</a>
+  <a href="language_zh.html">中文</a>
+</div>
+<div class="md-body">
+<h1>Silu Language Guide</h1>
+<p>Silu uses Python syntax for a <strong>documented subset</strong>, not the whole Python language or its package ecosystem. The native compiler turns annotated programs into native binaries through LLVM.</p>
+<h2>A complete program</h2>
+<pre><code>def fib(n: int) -&gt; int:
+    if n &lt; 2:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+print(fib(24))</code></pre>
+<p>Save as <code>fib.si</code> and compile with the native bundle:</p>
+<pre><code>./siluc fib.si -o fib
+./fib</code></pre>
+<p>The compiler requires <code>clang</code> on PATH. Keep <code>siluc</code> and <code>siluc1</code> in the same directory.</p>
+<h2>Values and annotations</h2>
+<pre><code>count: int = 3
+ratio: float = 1.5
+enabled: bool = True
+name: str = "Silu"
+numbers: list[int] = [1, 2, 3]
+counts: dict[str, int] = {"a": 1}</code></pre>
+<ul><li><code>int</code> is signed 64-bit, not an arbitrary-precision Python integer.</li><li><code>float</code> is IEEE-754 double precision. <code>int / int</code> produces a float.</li><li>Strings follow Python Unicode code-point indexing and slicing.</li><li><code>bool</code>, <code>bytes</code>, lists, dictionaries, functions and record-style classes are supported within the documented subset.</li><li>Conservative inference can give unannotated locals a native representation. Unresolved or conflicting cases use the dynamic representation.</li></ul>
+<p>Static annotations determine native representation. They are not optional type hints that can be violated without consequences.</p>
+<h2>Functions and control flow</h2>
+<pre><code>def absolute(x: int) -&gt; int:
+    if x &lt; 0:
+        return -x
+    return x
+
+total = 0
+for i in range(10):
+    total += absolute(i - 4)
+
+while total &gt; 100:
+    total -= 1</code></pre>
+<p>Functions support recursion, default arguments, and read-only closures over the defining scope. <code>if</code>/<code>elif</code>/<code>else</code>, <code>while</code>, <code>for</code>, <code>break</code>, <code>continue</code>, and a documented <code>match</code> subset are available.</p>
+<h2>Containers</h2>
+<pre><code>words = ["silu", "native"]
+words.append("compiler")
+print(len(words))
+print(words[0])
+
+counts: dict[str, int] = {}
+for word in words:
+    counts[word] = counts.get(word, 0) + 1</code></pre>
+<p>Container assignment shares the object, as in Python. String values follow an owned-buffer discipline. Not every Python container implementation detail is preserved: native integer/float dictionary iteration order is not promised to match CPython insertion order.</p>
+<h2>Records</h2>
+<p>Classes are record types with dataclass-like fields and methods:</p>
+<pre><code>class Point:
+    x: int
+    y: int
+
+    def sum(self) -&gt; int:
+        return self.x + self.y
+
+p = Point(3, 4)
+print(p.sum())</code></pre>
+<p>This is not general Python object orientation: inheritance, arbitrary class variables and user-defined <code>__init__</code> are outside this record model. Instance and container fields use reference semantics.</p>
+<h2>Errors and checked operations</h2>
+<p>By default, division by zero, integer overflow and out-of-range indexing stop with a runtime error. <code>SILU_CHECKS=0</code> changes the native release behavior: integer overflow wraps and out-of-range indexing is undefined behavior; division by zero remains checked. Use it only after validation.</p>
+<p>The wider Python toolchain provides:</p>
+<pre><code>silu program.si              # reference interpreter
+silu check program.si       # subset compatibility
+silu verify program.si      # compare native output with the interpreter
+silu prove program.si       # prove checked aborts unreachable, or report a counterexample</code></pre>
+<p>The first native binary bundle contains <code>siluc</code>/<code>siluc1</code>; these Python-toolchain commands are not included in that archive.</p>
+<p><code>require(condition)</code> declares a prover-only function contract:</p>
+<pre><code>def safe_div(a: int, b: int) -&gt; int:
+    require(b != 0)
+    return a / b</code></pre>
+<p>The prover currently targets division by zero, index bounds and dictionary keys. It uses bounded loop verification and explicitly reports unproved obligations. It does not establish absence of every possible crash, such as OOM, stack overflow, FFI failures or compiler defects.</p>
+<h2>Read next</h2>
+<ul><li><a href="semantics.html">Semantics and limits</a></li><li><a href="memory.html">Memory design</a></li><li><a href="interop.html">C interop</a></li><li><a href="rfc_sum_types.html">Sum types RFC</a></li></ul>
+</div>
+<footer><a href="https://github.com/askender/silu-lang">GitHub</a> · <a href="language_zh.html">中文版</a></footer>
+</body>
+</html>

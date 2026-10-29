@@ -14,7 +14,7 @@ a:hover{text-decoration:underline}
 .lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
 .lang-switch a:hover{color:var(--fg);text-decoration:none}
 .lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
-.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap}
+.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap;max-width:calc(100vw - 9rem)}
 .md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
 .md-nav a:hover{color:var(--fg);border-color:var(--accent);text-decoration:none}
 .md-nav a.home{color:var(--accent);font-weight:600}
@@ -39,14 +39,14 @@ footer{padding:2.5rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;b
 </style>
 </head>
 <body>
-<div class="md-nav"><a href="zh.html" class="home">🏠 首页</a><a href="benchmarks_zh.html" class="active-page">性能评测</a><a href="memory_zh.html">内存管理</a><a href="rfc_sum_types_zh.html">和类型 RFC</a><a href="symbolic_roadmap_zh.html">符号执行路线图</a><a href="interop_zh.html">C 互操作</a></div>
+<div class="md-nav"><a href="zh.html" class="home">🏠 首页</a><a href="language_zh.html">语言指南</a><a href="semantics_zh.html">语义契约</a><a href="benchmarks_zh.html" class="active-page">性能评测</a><a href="memory_zh.html">内存管理</a><a href="rfc_sum_types_zh.html">和类型 RFC</a><a href="symbolic_roadmap_zh.html">符号执行路线图</a><a href="interop_zh.html">C 互操作</a></div>
 <div class="lang-switch">
   <a href="benchmarks.html">EN</a>
   <a href="benchmarks_zh.html" class="active">中文</a>
 </div>
 <div class="md-body">
 <h1>速度评测：Silu vs CPython vs Rust（2026-10-25, v1.9.0）</h1>
-<blockquote>数据由 <code>python benchmarks/run_benchmarks.py --report</code> 生成<br>（每程序 3 轮取中位数，含进程启动；Apple Silicon；CPython 3.13<br>/ Rust 1.89 release / clang -O2）。方法学与各程序归因见<br>benchmarks/README.md。复现：<br><code>python benchmarks/run_benchmarks.py --report</code>。</blockquote>
+<blockquote>数据由 <code>python benchmarks/run_benchmarks.py --report</code> 生成<br>（每程序 3 轮取中位数，含进程启动；Apple Silicon；CPython 3.13<br>/ Rust 1.89 release / clang -O2）。方法学与各程序归因见<br>基准测试工具。复现：<br><code>python benchmarks/run_benchmarks.py --report</code>。</blockquote>
 <h2>一、运行速度：15 程序（含 Json 孪生）× 4 平面</h2>
 <table>
 <thead><tr>

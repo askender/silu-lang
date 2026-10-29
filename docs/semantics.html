@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Semantics — Silu</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg);text-decoration:none}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
+.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap;max-width:calc(100vw - 9rem)}
+.md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
+.md-nav a:hover{color:var(--fg);border-color:var(--accent);text-decoration:none}
+.md-nav a.home{color:var(--accent);font-weight:600}
+.md-body{max-width:920px;margin:0 auto;padding:5.5rem 2rem 4rem}
+.md-body h1{font-size:2rem;margin-bottom:1.5rem;color:var(--accent);letter-spacing:-.02em}
+.md-body h2{font-size:1.5rem;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.md-body h3{font-size:1.15rem;margin:2rem 0 .8rem}
+.md-body p{margin:.8rem 0;color:var(--fg)}
+.md-body li{margin:.4rem 0;color:var(--fg)}
+.md-body code{background:rgba(88,166,255,.1);color:var(--accent);padding:.15rem .4rem;border-radius:4px;font-family:'SF Mono',Consolas,monospace;font-size:.88em}
+.md-body pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.2rem;overflow-x:auto;margin:1.2rem 0}
+.md-body pre code{background:none;color:var(--fg);padding:0;font-size:.82rem;line-height:1.6}
+.md-body table{width:100%;border-collapse:collapse;font-size:.9rem;margin:1.5rem 0}
+.md-body th{text-align:left;padding:.6rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
+.md-body td{padding:.5rem 1rem;border-bottom:1px solid var(--border)}
+.md-body blockquote{border-left:3px solid var(--accent);padding:.8rem 1.2rem;margin:1.2rem 0;color:var(--dim);background:rgba(88,166,255,.05);border-radius:0 8px 8px 0}
+.md-body strong{color:var(--accent2)}
+.md-body hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+.md-body ul,.md-body ol{padding-left:1.5rem}
+footer{padding:2.5rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border);margin-top:2rem}
+.md-nav a.active-page{color:var(--accent);border-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="md-nav"><a href="./" class="home">🏠 Home</a><a href="language.html">Language</a><a href="semantics.html" class="active-page">Semantics</a><a href="benchmarks.html">Benchmarks</a><a href="memory.html">Memory</a><a href="rfc_sum_types.html">Sum Types RFC</a><a href="symbolic_roadmap.html">Symbolic Roadmap</a><a href="interop.html">C Interop</a></div>
+<div class="lang-switch">
+  <a href="semantics.html" class="active">EN</a>
+  <a href="semantics_zh.html">中文</a>
+</div>
+<div class="md-body">
+<h1>Semantics and Limits</h1>
+<p>This page records where Silu follows Python and where the native representation deliberately differs. It is the reference to read before writing performance-sensitive code.</p>
+<h2>Numbers</h2>
+<table>
+<thead><tr>
+<th>Behavior</th>
+<th>Silu</th>
+</tr></thead><tbody>
+<tr><td>Integer representation</td><td>Signed 64-bit (<code>i64</code>), not Python arbitrary precision</td></tr>
+<tr><td>Overflow, default</td><td>Checked runtime error</td></tr>
+<tr><td>Overflow, <code>SILU_CHECKS=0</code></td><td>Two's-complement wrap</td></tr>
+<tr><td>Float</td><td>IEEE-754 double precision</td></tr>
+<tr><td>Division</td><td><code>int / int</code> yields a float; <code>//</code> and <code>%</code> follow Python floor semantics</td></tr>
+<tr><td>Division by zero</td><td>Always a checked runtime error</td></tr>
+<tr><td>Mixed <code>int</code>/<code>float</code></td><td>Integer is promoted to float</td></tr>
+</tbody></table>
+<p>Programs that require arbitrary-precision integers are not a fit for the current native integer model.</p>
+<h2>Strings</h2>
+<p><code>len(s)</code>, <code>s[i]</code>, slices and iteration use Unicode code-point semantics, like Python. Native indexing may require a code-point walk; it is not a promise of constant-time arbitrary indexing.</p>
+<p>Native strings use owned buffers. Assignment copies a string value, appending may reuse its buffer, and an overwritten or scope-exit slot releases its storage where the static ownership rules permit. Borrowed arguments avoid copying a string merely to call a function.</p>
+<h2>Containers and records</h2>
+<ul><li>List/dict assignment and arguments share the object, like Python references.</li><li>To avoid use-after-free in the absence of escape analysis, native integer/float containers and record instances are not scope-dropped; their allocations can live until process exit.</li><li><code>list[str]</code> and string keys use explicit copy-in/copy-out ownership rules. See the <a href="memory.html">memory design</a> for details.</li><li>Native integer/float dictionaries use open addressing. Iteration/printing order is not guaranteed to match CPython insertion order.</li><li>Classes are record types, not unrestricted Python classes. Instance assignment shares the instance; container fields also share their objects.</li></ul>
+<p>These are important limits for long-running programs with large transient container graphs. There is no tracing garbage collector.</p>
+<h2>Native checks</h2>
+<table>
+<thead><tr>
+<th>Configuration</th>
+<th>Overflow</th>
+<th>Index bounds</th>
+<th>Division by zero</th>
+</tr></thead><tbody>
+<tr><td><code>SILU_CHECKS=1</code> (default)</td><td>Checked error</td><td>Checked error</td><td>Checked error</td></tr>
+<tr><td><code>SILU_CHECKS=0</code></td><td>Wrap</td><td><strong>Undefined behavior</strong></td><td>Checked error</td></tr>
+</tbody></table>
+<p>Disabling bounds checks is only appropriate after the relevant program has been validated. The prover's checks do not turn arbitrary unchecked native code into memory-safe code.</p>
+<h2>Verification tools</h2>
+<ul><li><code>silu verify program.si</code> compares native output against the reference interpreter.</li><li><code>silu symbolic program.si</code> explores feasible paths and constraints.</li><li><code>silu prove program.si</code> checks supported abort obligations and reports counterexamples for reachable failures.</li></ul>
+<h3>Prover scope</h3>
+<p>The current prover targets division/modulo by zero, statically analyzable index bounds and dictionary keys. <code>require(condition)</code> defines a function's proof domain; the function is proved independently, and call sites are checked against that contract.</p>
+<p>Path conditions guide the proof. Loops use bounded verification. If the solver cannot discharge an obligation, it is reported as unproved rather than silently treated as safe.</p>
+<p>The prover does <strong>not</strong> cover every possible failure: memory exhaustion, stack overflow, arbitrary dynamic behavior, FFI faults, undefined behavior from disabled native checks, and compiler implementation defects are outside its claim.</p>
+<p>These Python-toolchain commands are not part of the first native <code>siluc</code> binary archive.</p>
+<h2>Interoperability</h2>
+<p>The <code>@export</code> and <code>from c import</code> forms expose static scalar interfaces to C. Arbitrary dynamic objects do not cross the C boundary. See <a href="interop.html">C interop</a> for supported signatures and ownership rules.</p>
+</div>
+<footer><a href="https://github.com/askender/silu-lang">GitHub</a> · <a href="semantics_zh.html">中文版</a></footer>
+</body>
+</html>

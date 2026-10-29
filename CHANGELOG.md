@@ -4,6 +4,14 @@ All notable changes, organized by version tag.
 
 ## v1.x — Self-Hosting Campaign (2026-10-16 → present)
 
+### v1.16.1
+First public native toolchain release
+
+- native `siluc`/`siluc1` archives for macOS (ARM64/x86_64) and Linux (ARM64/x86_64), with checksums and runnable examples
+- portable target/linker selection, cold runtime-cache creation, and installed-wheel bootstrap outside the package directory
+- bilingual language guide, semantics/prover limits, examples, and honest release positioning
+- the native archive does not include the Python interpreter or `silu prove`
+
 ### v1.16.0
 interprocedural contracts: require() - modular proof composition
 

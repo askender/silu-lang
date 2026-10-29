@@ -1,162 +1,61 @@
 # Silu
 
-**A compiled language that matches Rust's speed — and proves its own code can't crash.**
+**English** | [简体中文](README_zh.md)
 
-Silu compiles to native binaries through LLVM with performance at parity
-with Rust (geometric mean 1.0× across 15 benchmarks), bootstraps its own
-compiler (the toolchain is written in Silu and compiled by itself), and
-ships a built-in Z3-backed prover that verifies your functions cannot
-abort — with counterexample witnesses when they can.
+**A concise, self-hosted, compiled language with Python syntax.**
 
-```
-$ cat safe.si
-def safe_div(a: int, b: int) -> int:
-    require(b != 0)
-    return a / b
+Silu is an early-stage language with a documented Python-syntax subset, an LLVM native compiler, and a compiler written in Silu itself. The wider toolchain includes a reference interpreter and a Z3-backed prover for checked arithmetic and indexing errors.
 
-$ silu prove safe.si
-safe_div: ok (1 checked abort site(s) proved safe)
-verify: ok - no abort reachable
+```python
+def greet(name: str) -> str:
+    return "Hello, " + name + "!"
+
+print(greet("Silu"))
 ```
 
-## Why Silu
+## Download and compile
 
-| Property | Detail |
-|---|---|
-| **Performance** | 1.0× vs Rust (geomean, 15 benchmarks); 14× vs CPython; 500× vs the reference interpreter |
-| **Panic-free proofs** | `silu prove` uses Z3 to discharge abort obligations — division by zero, index out of range, KeyError — over ALL inputs, not sampling |
-| **Contracts** | `require(cond)` declares a function's domain; the function proves safe standalone, callers are checked separately — removing a caller never invalidates a proof |
-| **Self-hosted** | The compiler is written in Silu and compiled by itself; `silu bootstrap` builds the zero-Python toolchain from source in ~25 seconds |
-| **Fast compilation** | `./siluc hello.si -o hello` in 0.11 seconds (vs rustc 0.13s) — LTO by default |
-| **Memory-safe without GC** | Static type annotations drive the representation; no garbage collector, no borrow checker — the discipline is in the compiler |
+The current binary bundle contains the native compiler (`siluc` and its companion `siluc1`), not the Python interpreter or `silu prove`. No Python installation is needed to use it. You need macOS or Linux and `clang` on PATH.
 
-## Benchmarks
+1. Download the archive for your machine from [Releases](https://github.com/askender/silu-lang/releases).
+2. Extract it, keeping `siluc` and `siluc1` together:
 
-15 programs compared across six planes (interpreter, CPython, compiled
-native, Rust, C, and a self-hosted interpreter). All outputs verified
-byte-identical across every plane.
-
-| Program | Silu native | Rust | vs Rust |
-|---|---|---|---|
-| wordcount | 8.8ms | 15.3ms | **1.8×** |
-| dict | 2.2ms | 2.8ms | **1.3×** |
-| knucleotide | 11.0ms | 14.8ms | **1.3×** |
-| mandelbrot | 2.4ms | 2.7ms | **1.2×** |
-| fib | 2.5ms | 2.8ms | **1.1×** |
-| spectral | 4.2ms | 4.4ms | **1.05×** |
-| arith | 3.3ms | 3.4ms | **1.03×** |
-| list | 2.4ms | 2.4ms | 1.0× |
-| string | 3.0ms | 2.2ms | 0.7× |
-| jsonparse | 8.7ms | 6.4ms | 0.7× |
-| **Geometric mean** | | | **1.0×** |
-
-Full methodology and per-program analysis: [docs/benchmarks.md](docs/benchmarks.md)
-
-## The prover
-
-Silu's checked-error policy (abort with a message on division by zero,
-out-of-range index, missing key) makes "can this function ever crash?"
-a precisely decidable property. `silu prove` drives a symbolic executor
-with Z3 to answer it:
-
-- **Real proofs, not sampling**: `a / (b*b + 1)` is proved safe by
-  algebraic reasoning (the divisor is always ≥ 1), not by testing
-  inputs
-- **Witnesses for real bugs**: `m / (n - n)` is flagged with the
-  counterexample — the divisor is identically zero
-- **Contracts compose**: a function's proof stands alone under its
-  declared `require()` domain; removing a caller never invalidates it
-
-```
-$ cat spectral.si
-def a(i: int, j: int) -> float:
-    require(i >= 0 and j >= 0)
-    return 1.0 / ((i + j) * (i + j + 1) / 2 + i + 1)
-
-$ silu prove spectral.si
-a: ok (1 checked abort site(s) proved safe)
-multiply: ok (no checked operations)
-multiply_transposed: ok (no checked operations)
-verify: ok - no abort reachable
-```
-
-## Quick start
-
-```bash
-# Install (pip)
-pip install pysilu
-
-# Or download pre-built binaries from Releases
-
-# Run a program
-silu hello.si
-
-# Compile to a native binary (needs clang)
-silu build hello.si -o hello && ./hello
-
-# Build the self-hosted toolchain (one-time, ~25s)
-silu bootstrap
-
-# Now use the fast path: zero Python, ~0.13s per compile
+```sh
+tar -xzf siluc-<version>-<platform>.tar.gz
+cd siluc-<version>-<platform>
+chmod +x siluc siluc1
 ./siluc hello.si -o hello
-
-# Prove your code
-silu prove my_program.si
+./hello
+# Hello, Silu!
 ```
 
-## Language
+For macOS, install the Xcode Command Line Tools if needed. On Debian/Ubuntu, use `sudo apt install clang`.
 
-Silu is a Python subset with static type annotations that drive the
-representation:
+Each archive includes `hello.si`, `fib.si`, a README and a SHA-256 checksum. See [examples/hello.si](examples/hello.si) in this repository as well.
 
-```python
-def fib(n: int) -> int:
-    if n < 2:
-        return n
-    return fib(n - 1) + fib(n - 2)
+## What defines Silu
 
-def word_frequency(text: str) -> dict[str, int]:
-    counts: dict[str, int] = {}
-    for word in text.split(" "):
-        counts[word] = counts.get(word, 0) + 1
-    return counts
-```
-
-Annotated `int` stays on the stack (i64), `float` stays on the stack
-(double), `str` gets a Rust-String-style owned representation, and
-containers (`list[int]`, `dict[str, float]`) use unboxed raw storage.
-Unannotated code falls back to a dynamic PyObject runtime — both
-worlds interoperate through explicit box/unbox boundaries.
-
-The built-in `Json` sum type gives heterogeneous containers a typed
-home:
-
-```python
-data: Json = [1, "two", {"three": 3}]
-items: list[Json] = [data, 5]
-print(json_int(items[1]) + len(items))  # 3
-json_free(data)  # recursive teardown of the whole tree
-```
+- **Python syntax, explicit subset.** Functions, annotations, containers, records and control flow are documented rather than assumed compatible with arbitrary CPython programs.
+- **Self-hosted compiler.** The lexer, parser, IR generator and LLVM code generator are written in Silu. A fixed-point check reproduces the compiler's own build output byte-for-byte.
+- **Native representation.** Static annotations select unboxed scalars, owned string buffers and raw containers; no garbage collector is used. Ownership and lifetime trade-offs are documented.
+- **Proofs where the tool can justify them.** In the Python toolchain, `silu prove` checks division by zero, index bounds and dictionary keys. Loops have a finite verification bound, and unproved obligations are reported rather than silently accepted.
+- **Measured performance.** The v1.9.0 report covers 15 programs: 15.6× CPython and 515× the reference interpreter in geometric mean. The same report is 0.9× against hand-written Rust twins overall — some programs faster, some slower. See the full [benchmark report](docs/benchmarks.md).
 
 ## Documentation
 
-- [Benchmarks — methodology, six-plane comparison, per-program analysis](docs/benchmarks.md)
-- [Memory design — no GC, no borrow checker, measured](docs/memory.md)
-- [Sum types RFC — the tagged-union design](docs/rfc_sum_types.md)
-- [Symbolic execution roadmap — invariants, prove, equivalence](docs/symbolic_roadmap.md)
-- [C interop — @export, from c import, the siluc toolchain](docs/interop.md)
+Project site: [silu.askender.xyz](https://silu.askender.xyz/) ([中文](https://silu.askender.xyz/zh.html))
 
-## Toolchain
+- [Language guide](docs/language.md) / [语言指南](docs/language_zh.md)
+- [Semantics and limits](docs/semantics.md) / [语义契约与限制](docs/semantics_zh.md)
+- [Benchmarks](docs/benchmarks.md) / [性能评测](docs/benchmarks_zh.md)
+- [Memory design](docs/memory.md) / [内存设计](docs/memory_zh.md)
+- [C interop](docs/interop.md) / [C 互操作](docs/interop_zh.md)
+- [Symbolic roadmap](docs/symbolic_roadmap.md) / [符号执行路线图](docs/symbolic_roadmap_zh.md)
 
-```
-source (.si) → siluc1 (front end + converter, written in Silu) → .ll → clang -flto → native binary
-```
+## Source availability
 
-The entire compiler — lexer, parser, IR generator, LLVM code generator —
-is written in Silu and compiled to a native binary by itself. The
-fixed-point proof (the self-hosted converter reproducing its own build
-output byte-for-byte) runs in the test suite.
+This repository publishes documentation, examples and native binary releases. The compiler source is being prepared for staged publication. The separate `silu-nightly` repository is a private development backup; the older `silu` repository is paused.
 
 ## License
 
-TBD (will be announced before source release)
+To be announced before source publication.

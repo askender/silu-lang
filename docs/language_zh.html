@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>语言指南 — Silu</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg);text-decoration:none}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
+.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap;max-width:calc(100vw - 9rem)}
+.md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
+.md-nav a:hover{color:var(--fg);border-color:var(--accent);text-decoration:none}
+.md-nav a.home{color:var(--accent);font-weight:600}
+.md-body{max-width:920px;margin:0 auto;padding:5.5rem 2rem 4rem}
+.md-body h1{font-size:2rem;margin-bottom:1.5rem;color:var(--accent);letter-spacing:-.02em}
+.md-body h2{font-size:1.5rem;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.md-body h3{font-size:1.15rem;margin:2rem 0 .8rem}
+.md-body p{margin:.8rem 0;color:var(--fg)}
+.md-body li{margin:.4rem 0;color:var(--fg)}
+.md-body code{background:rgba(88,166,255,.1);color:var(--accent);padding:.15rem .4rem;border-radius:4px;font-family:'SF Mono',Consolas,monospace;font-size:.88em}
+.md-body pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.2rem;overflow-x:auto;margin:1.2rem 0}
+.md-body pre code{background:none;color:var(--fg);padding:0;font-size:.82rem;line-height:1.6}
+.md-body table{width:100%;border-collapse:collapse;font-size:.9rem;margin:1.5rem 0}
+.md-body th{text-align:left;padding:.6rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
+.md-body td{padding:.5rem 1rem;border-bottom:1px solid var(--border)}
+.md-body blockquote{border-left:3px solid var(--accent);padding:.8rem 1.2rem;margin:1.2rem 0;color:var(--dim);background:rgba(88,166,255,.05);border-radius:0 8px 8px 0}
+.md-body strong{color:var(--accent2)}
+.md-body hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+.md-body ul,.md-body ol{padding-left:1.5rem}
+footer{padding:2.5rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border);margin-top:2rem}
+.md-nav a.active-page{color:var(--accent);border-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="md-nav"><a href="zh.html" class="home">🏠 首页</a><a href="language_zh.html" class="active-page">语言指南</a><a href="semantics_zh.html">语义契约</a><a href="benchmarks_zh.html">性能评测</a><a href="memory_zh.html">内存管理</a><a href="rfc_sum_types_zh.html">和类型 RFC</a><a href="symbolic_roadmap_zh.html">符号执行路线图</a><a href="interop_zh.html">C 互操作</a></div>
+<div class="lang-switch">
+  <a href="language.html">EN</a>
+  <a href="language_zh.html" class="active">中文</a>
+</div>
+<div class="md-body">
+<h1>Silu 语言指南</h1>
+<p>Silu 使用 Python 语法，但支持的是<strong>有明确文档的子集</strong>，不是完整 Python 语言或其第三方包生态。原生编译器通过 LLVM 将带注解程序编译为原生二进制。</p>
+<h2>一个完整程序</h2>
+<pre><code>def fib(n: int) -&gt; int:
+    if n &lt; 2:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+print(fib(24))</code></pre>
+<p>保存为 <code>fib.si</code>，用原生工具包编译：</p>
+<pre><code>./siluc fib.si -o fib
+./fib</code></pre>
+<p>编译器需要 PATH 中的 <code>clang</code>。请保持 <code>siluc</code> 与 <code>siluc1</code> 位于同一目录。</p>
+<h2>值与类型注解</h2>
+<pre><code>count: int = 3
+ratio: float = 1.5
+enabled: bool = True
+name: str = "Silu"
+numbers: list[int] = [1, 2, 3]
+counts: dict[str, int] = {"a": 1}</code></pre>
+<ul><li><code>int</code> 是有符号 64 位整数，不是 Python 的任意精度整数。</li><li><code>float</code> 是 IEEE-754 双精度浮点；<code>int / int</code> 的结果是浮点数。</li><li>字符串索引和切片遵循 Python 的 Unicode 码点语义。</li><li>在文档规定的子集内支持 <code>bool</code>、<code>bytes</code>、列表、字典、函数和记录式类。</li><li>保守推断可为未注解局部量选择原生表示；无法确定或类型冲突时使用动态表示。</li></ul>
+<p>静态注解会决定原生表示，不是违背也毫无影响的类型提示。</p>
+<h2>函数与控制流</h2>
+<pre><code>def absolute(x: int) -&gt; int:
+    if x &lt; 0:
+        return -x
+    return x
+
+total = 0
+for i in range(10):
+    total += absolute(i - 4)
+
+while total &gt; 100:
+    total -= 1</code></pre>
+<p>函数支持递归、默认参数，以及对定义作用域的只读闭包。支持 <code>if</code>/<code>elif</code>/<code>else</code>、<code>while</code>、<code>for</code>、<code>break</code>、<code>continue</code> 和文档规定的 <code>match</code> 子集。</p>
+<h2>容器</h2>
+<pre><code>words = ["silu", "native"]
+words.append("compiler")
+print(len(words))
+print(words[0])
+
+counts: dict[str, int] = {}
+for word in words:
+    counts[word] = counts.get(word, 0) + 1</code></pre>
+<p>容器赋值与 Python 一样共享对象；字符串值采用独占缓冲纪律。并非所有 CPython 容器实现细节都保留：原生整数/浮点字典的迭代顺序不保证与 CPython 插入顺序一致。</p>
+<h2>记录类型</h2>
+<p>类是带字段和方法的记录类型，行为类似 dataclass：</p>
+<pre><code>class Point:
+    x: int
+    y: int
+
+    def sum(self) -&gt; int:
+        return self.x + self.y
+
+p = Point(3, 4)
+print(p.sum())</code></pre>
+<p>这不是完整的 Python 面向对象模型：继承、任意类变量和用户 <code>__init__</code> 不属于当前记录模型。实例和容器字段采用引用语义。</p>
+<h2>错误与运行时检查</h2>
+<p>默认情况下，除零、整数溢出和下标越界会以运行时错误终止。原生代码可通过 <code>SILU_CHECKS=0</code> 切换为发布行为：整数溢出回绕，下标越界是未定义行为，除零仍然检查。仅在完成验证后使用。</p>
+<p>完整 Python 工具链还提供：</p>
+<pre><code>silu program.si              # 参考解释器
+silu check program.si       # 子集兼容性检查
+silu verify program.si      # 原生输出与解释器对拍
+silu prove program.si       # 证明受检 abort 不可达，或报告反例</code></pre>
+<p>首个原生二进制包只包含 <code>siluc</code>/<code>siluc1</code>，不包含上述 Python 工具链命令。</p>
+<p><code>require(condition)</code> 声明仅供证明器使用的函数契约：</p>
+<pre><code>def safe_div(a: int, b: int) -&gt; int:
+    require(b != 0)
+    return a / b</code></pre>
+<p>证明器当前覆盖除零、下标边界和字典键，循环按有限界验证，未证明的义务会明确报告。它不保证排除所有崩溃，例如内存耗尽、栈溢出、FFI 故障或编译器缺陷。</p>
+<h2>继续阅读</h2>
+<ul><li><a href="semantics_zh.html">语义契约与限制</a></li><li><a href="memory_zh.html">内存设计</a></li><li><a href="interop_zh.html">C 互操作</a></li><li><a href="rfc_sum_types_zh.html">和类型 RFC</a></li></ul>
+</div>
+<footer><a href="https://github.com/askender/silu-lang">GitHub</a> · <a href="language.html">English</a></footer>
+</body>
+</html>

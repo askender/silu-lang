@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>语义契约 — Silu</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg);text-decoration:none}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
+.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap;max-width:calc(100vw - 9rem)}
+.md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
+.md-nav a:hover{color:var(--fg);border-color:var(--accent);text-decoration:none}
+.md-nav a.home{color:var(--accent);font-weight:600}
+.md-body{max-width:920px;margin:0 auto;padding:5.5rem 2rem 4rem}
+.md-body h1{font-size:2rem;margin-bottom:1.5rem;color:var(--accent);letter-spacing:-.02em}
+.md-body h2{font-size:1.5rem;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.md-body h3{font-size:1.15rem;margin:2rem 0 .8rem}
+.md-body p{margin:.8rem 0;color:var(--fg)}
+.md-body li{margin:.4rem 0;color:var(--fg)}
+.md-body code{background:rgba(88,166,255,.1);color:var(--accent);padding:.15rem .4rem;border-radius:4px;font-family:'SF Mono',Consolas,monospace;font-size:.88em}
+.md-body pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.2rem;overflow-x:auto;margin:1.2rem 0}
+.md-body pre code{background:none;color:var(--fg);padding:0;font-size:.82rem;line-height:1.6}
+.md-body table{width:100%;border-collapse:collapse;font-size:.9rem;margin:1.5rem 0}
+.md-body th{text-align:left;padding:.6rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
+.md-body td{padding:.5rem 1rem;border-bottom:1px solid var(--border)}
+.md-body blockquote{border-left:3px solid var(--accent);padding:.8rem 1.2rem;margin:1.2rem 0;color:var(--dim);background:rgba(88,166,255,.05);border-radius:0 8px 8px 0}
+.md-body strong{color:var(--accent2)}
+.md-body hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+.md-body ul,.md-body ol{padding-left:1.5rem}
+footer{padding:2.5rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border);margin-top:2rem}
+.md-nav a.active-page{color:var(--accent);border-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="md-nav"><a href="zh.html" class="home">🏠 首页</a><a href="language_zh.html">语言指南</a><a href="semantics_zh.html" class="active-page">语义契约</a><a href="benchmarks_zh.html">性能评测</a><a href="memory_zh.html">内存管理</a><a href="rfc_sum_types_zh.html">和类型 RFC</a><a href="symbolic_roadmap_zh.html">符号执行路线图</a><a href="interop_zh.html">C 互操作</a></div>
+<div class="lang-switch">
+  <a href="semantics.html">EN</a>
+  <a href="semantics_zh.html" class="active">中文</a>
+</div>
+<div class="md-body">
+<h1>Silu 语义契约（Semantics Contract）</h1>
+<p>本文档写明 Silu 与 Python 语义<strong>一致</strong>的地方、<strong>有意分歧</strong>的地方， 以及原生编译（typed 后端）下的性能与内存契约。它的定位是"系统程序员 一页纸"：写高性能 Silu 代码前读这一篇就够。</p>
+<h2>1. 数值语义</h2>
+<table>
+<thead><tr>
+<th>方面</th>
+<th>行为</th>
+</tr></thead><tbody>
+<tr><td>整数表示</td><td>有符号 64 位（i64），<strong>不是</strong> Python 的任意精度 bigint</td></tr>
+<tr><td>整数溢出</td><td>默认（<code>SILU_CHECKS=1</code>）panic 并报行号，等同 Rust debug 构建；<code>SILU_CHECKS=0</code> 时二进制补码回绕（wrap），等同 Rust release 构建</td></tr>
+<tr><td>浮点</td><td>IEEE 754 双精度（f64）；<code>int / int</code> 恒为 float（Python 语义），<code>//</code> 与 <code>%</code> 遵循 Python 的向下取整语义（与被除数符号无关）</td></tr>
+<tr><td>除零</td><td>任何配置下都 panic（Rust 亦如此）</td></tr>
+<tr><td>NaN</td><td><code>!=</code> 对 NaN 恒为真（Python 语义），其余比较为假</td></tr>
+<tr><td>int/float 混合运算</td><td>int 提升为 float（Python 语义）</td></tr>
+<tr><td>int → float 精度</td><td><code>float(int)</code> 与比较遵循 IEEE 最近舍入；<code>int(float)</code> 截断，不可表示时 panic（checks 开启）</td></tr>
+</tbody></table>
+<p><strong>与 Python 的最大分歧就是 bigint</strong>：超过 i64 范围的整数运算在默认配置下 会 panic（而不是静默正确），在 <code>SILU_CHECKS=0</code> 下会回绕（而不是报错）。 需要任意精度的程序目前不适合 Silu。</p>
+<h2>2. 字符串语义</h2>
+<ul><li><strong>码点语义（与 Python 完全一致）</strong>：<code>len(s)</code>、<code>s[i]</code>、<code>s[a:b]</code>、</li></ul>
+<p><code>for ch in s</code> 都按 Unicode 码点计，已在多字节文本（CJK）上与 CPython 逐字节对拍验证。代价是 <code>s[i]</code> 为 O(n) 走查（与 Rust 的 <code>chars().nth(i)</code> 相同）；<code>for</code> 迭代整体仍为 O(字节数)。</p>
+<ul><li><strong>等值/比较/成员判断</strong>：按 UTF-8 字节序，与码点序等价（memcmp 语义）。</li><li><strong>可变性的幻觉</strong>：Python 的 str 不可变，Silu 的 rawstr 槽用</li></ul>
+<p>Rust String 式所有权模拟：<code>s = s + x</code> 摊销 O(1) 原地追加，但 <code>t = s</code> 是<strong>拷贝</strong>——之后改 <code>t</code> 不影响 <code>s</code>，与 Python 一致。</p>
+<ul><li><strong>内存</strong>：槽被覆写时释放旧缓冲（drop-on-assign）；表达式临时量</li></ul>
+<p>（拼接/比较/包含的操作数、被丢弃的表达式语句结果）在使用后立即释放； 函数退出时释放其全部 rawstr 局部槽与参数槽。重赋值循环与高频调用 均为常量内存。</p>
+<ul><li><strong>lexer 内建</strong>（自举前置，docs/selfhosting.md）：<code>ord</code>/<code>chr</code> 按码点</li></ul>
+<p>编解码 UTF-8；<code>split()</code>（空白运行合并，空串抑制）与 <code>split(sep)</code> （字面分隔，保留空字段，空分隔符 panic）；<code>strip()</code> 去两端 ASCII 空白；<code>startswith</code>/<code>endswith</code>；<code>isdigit</code>/<code>isalpha</code>/<code>isspace</code> 对 ASCII 精确，非 ASCII 码点归入 alpha（其余 False）；空串的 is* 全为 False。<code>read_file(path)</code> 整读文件（不存在则 panic OSError）；<code>read_stdin()</code> 读 stdin 到 EOF（保留换行）。</p>
+<h2>3. 容器语义</h2>
+<ul><li><strong>list / dict 是 Python 引用语义</strong>：<code>b = a</code> 共享同一对象，</li></ul>
+<p>函数参数传入的也是引用。这与 rawstr 的拷贝语义<strong>有意不同</strong>， 因为 Python 程序员对容器的预期就是共享。</p>
+<ul><li>因此 int/float 元素的 rawlist 与 rawdict <strong>不做作用域 drop</strong>：参数、</li></ul>
+<p>名字赋值、返回值都可能共享指针，没有逃逸分析就释放会是 use-after-free。其缓冲区随进程生命周期存在（无 GC）。需要严格 内存上限的长驻程序应注意。</p>
+<ul><li>**<code>list[str]</code> 是例外<strong>：槽持有元素的</strong>拷贝**（写入时 copy-in），</li></ul>
+<p>读取交出<strong>新拷贝</strong>（读出即拥有，改 <code>l[0]</code> 不影响已读出的值）—— 因此它可以安全地做逐元素 drop（clear/覆写/作用域退出），与 rawdict 的 str 键同一套所有权约定。</p>
+<ul><li><code>dict[int, int]</code> / <code>dict[int, float]</code> 的键序不保证与 CPython 一致</li></ul>
+<p>（开放寻址哈希表，<code>print(d)</code> 的顺序是表序而非插入序）；<code>len</code>、 查找、<code>del</code> 语义一致。</p>
+<ul><li>边界检查：默认 panic 并报行号；<code>SILU_CHECKS=0</code> 时下标越界是</li></ul>
+<p>未定义行为（UB）——只在已验证的程序上关。</p>
+<h2>3.5 类（record 类型，dataclass 语义）</h2>
+<ul><li><strong>每个 class 都是记录类型</strong>：类体只允许注解字段（按声明顺序）</li></ul>
+<p>与方法（首参 <code>self</code>）；继承、类变量、用户 <code>__init__</code> 一律拒绝。 对应 Rust 的 <code>struct</code> + <code>impl</code>。</p>
+<ul><li><strong>构造</strong>：<code>P(a, b)</code> 按声明顺序位置构造；<code>P(x=a)</code> 关键字构造；</li></ul>
+<p>带默认值的字段之后不能再出现无默认值字段（dataclass 规则）。 每个实参按字段注解 coerce，违约：解释器 TypeError / 编译 panic （int 字段收 float 属于违约，不做静默截断）。</p>
+<ul><li><strong>方法与 self</strong>：<code>st.m(a)</code> 脱糖为 <code>P__m(st, a)</code>；<code>self.x</code> 读写</li></ul>
+<p>走字段偏移；方法可互调。self 是只读绑定。</p>
+<ul><li><strong>表示</strong>（编译路径）：实例是一块 <code>8 × 字段数</code> 字节的堆缓冲，</li></ul>
+<p>无对象头、无 vtable；字段按编译期布局表做偏移 load/store。 str 字段写入时 copy-in、读出时 copy-on-read（与 rawstr 槽同一 纪律）。</p>
+<ul><li><strong>容器字段（list/dict）是引用语义</strong>：字段槽存指针，读出交出</li></ul>
+<p>共享引用（<code>lst = b.items</code> 后 <code>lst.append(...)</code> 直接影响字段）， 与 Silu 容器的全局规则（§3）一致。容器默认值<strong>每实例独立</strong>—— Python 的共享可变默认值陷阱在 Silu 不存在。</p>
+<ul><li><strong>实例不 drop</strong>（正式决定）：实例允许自由别名（<code>b = a</code> 共享），</li></ul>
+<p>没有借用检查器，对共享实例做 drop 就是 use-after-free；实例内存 随进程生命周期。Rust 的 drop 依赖所有权系统，没有对应物就不做。</p>
+<ul><li><strong>实例引用语义</strong>：<code>b = a</code> 共享同一实例（与 list/dict 一致）。</li><li><strong>编译路径第一版的边界</strong>：嵌套实例字段（字段是另一个 class）暂</li></ul>
+<p>不支持（明确报错）；实例不可装箱——<code>print(p)</code> 是编译错误， 打印字段（<code>print(p.x)</code>）即可。</p>
+<h2>4. 标量光标提升（SILU_SCALARS=1，默认开）</h2>
+<p><code>list[int]</code> 若在一个函数作用域内**只以 <code>x[0]</code> 形式出现**（读或写）， 编译器把它提升为局部 i64 槽（入口播种一次）——递归下降解析器的 <code>pos[0] += 1</code> 光标从每次 4 次装箱下标变为纯寄存器算术。保守规则： 名字在<strong>多个函数的参数表</strong>中出现（跨函数共享游标）、有任何其他使用 （传参、<code>len(x)</code>、非 0 下标、<code>x = ...</code> 改绑）或是 <code>list[float]</code> 时 一律不提升；不提升即走普通装箱路径，<strong>永远不会产生错误代码</strong>。 <code>SILU_SCALARS=0</code> 可整体关闭。</p>
+<p><strong>热循环惯用法</strong>：若分析器不覆盖你的场景（如光标跨函数共享）， 可手动把 <code>pos[0]</code> 提出为 <code>p: int</code> 局部量、在调用边界前后同步—— 实测对 jsonparse 这类"每字符都要物化字符对象"的负载<strong>无收益</strong> （差距主体在字符物化而非光标装箱），仅当循环体内有大量独立于字符 访问的游标算术时才值得。</p>
+<h2>5. 类型推断契约</h2>
+<ul><li>注解（<code>x: int</code>、<code>def f(a: int) -&gt; int</code>）是<strong>用户契约</strong>：编译器</li></ul>
+<p>无条件相信，违背注解的改绑会被强制转换或 panic。</p>
+<ul><li>未注解的名字经<strong>保守推断</strong>升级为原始类型：只有证明该作用域内</li></ul>
+<p>所有赋值都产生同一类型时才升级；任何冲突（如 <code>x = 7</code> 后 <code>x = x / 2</code>） 都回落 PyObject 动态存储，Python 改绑语义完整保留。</p>
+<ul><li>跨函数推断同样保守：参数从未在函数体内改绑、且所有调用点传同一</li></ul>
+<p>原始类型才非装箱传递；返回表达式全部解析为同一类型才非装箱返回。 递归、关键字参数、元数不符、调用点类型冲突一律回落动态 ABI。</p>
+<h2>6. 检查开关</h2>
+<table>
+<thead><tr>
+<th>配置</th>
+<th>溢出</th>
+<th>边界</th>
+<th>除零</th>
+<th>适用</th>
+</tr></thead><tbody>
+<tr><td><code>SILU_CHECKS=1</code>（默认）</td><td>panic</td><td>panic</td><td>panic</td><td>开发、调试、正确性优先</td></tr>
+<tr><td><code>SILU_CHECKS=0</code></td><td>回绕</td><td>UB</td><td>panic</td><td>已验证程序的最后几个百分点</td></tr>
+</tbody></table>
+<p><code>SILU_CODEGEN=dynamic</code> 可回到全 PyObject 的旧后端用于对照调试。</p>
+<h2>7. 验证工具</h2>
+<ul><li><code>silu verify program.si</code>：解释器（参考语义）与编译产物对拍，</li></ul>
+<p>任何分歧都是编译器 bug。</p>
+<ul><li>运行时错误带源码行号：<code>IndexError: list index out of range (line 3)</code>。</li><li><code>silu symbolic program.si</code>：Z3 符号执行，枚举路径并生成测试输入。</li></ul>
+<h3>8. 证明器的范围</h3>
+<ul><li><code>silu prove program.si</code> 检查除零/取模除零、可静态分析的下标边界和字典键；可达错误给出反例。</li><li><code>require(condition)</code> 声明函数的证明定义域，函数独立证明，调用点另行检查契约。</li><li>路径条件参与推理，循环按有限界验证。求解器不能判定的义务报告为未证明，绝不静默视为安全。</li><li>证明不覆盖内存耗尽、栈溢出、任意动态行为、FFI 故障、关闭原生检查后的未定义行为，以及编译器实现缺陷。</li><li>首个原生 <code>siluc</code> 二进制包不包含这些 Python 工具链命令。</li></ul>
+</div>
+<footer><a href="https://github.com/askender/silu-lang">GitHub</a> · <a href="semantics.html">English</a></footer>
+</body>
+</html>

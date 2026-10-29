@@ -3,7 +3,7 @@
 > 数据由 `python benchmarks/run_benchmarks.py --report` 生成
 > （每程序 3 轮取中位数，含进程启动；Apple Silicon；CPython 3.13
 > / Rust 1.89 release / clang -O2）。方法学与各程序归因见
-> [benchmarks/README.md](../benchmarks/README.md)。复现：
+> 基准测试工具。复现：
 > `python benchmarks/run_benchmarks.py --report`。
 
 ## 一、运行速度：15 程序（含 Json 孪生）× 4 平面
