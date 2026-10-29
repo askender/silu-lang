@@ -6,7 +6,7 @@
 > per-program attribution see [benchmarks/README.md](../benchmarks/README.md).
 > Reproduce: `python benchmarks/run_benchmarks.py --report`.
 
-## 1. Runtime Speed: 14 programs × 4 planes
+## 1. Runtime Speed: 15 programs (incl. Json twin) × 4 planes
 
 | Program | Silu Interpreter | CPython | **Silu Native** | Rust | Native vs Rust |
 |---|---|---|---|---|---|
@@ -26,9 +26,9 @@
 | trees | 0.873s | 0.031s | 0.0032s | 0.0034s | **1.1×** |
 | wordcount | 6.740s | 0.088s | 0.0233s | 0.0137s | 0.6× |
 
-**Geometric mean: 0.9× vs Rust (overall lead) | 15.6× vs CPython | 500× vs
+**Geometric mean: 0.9× vs Rust (slightly behind overall) | 15.6× vs CPython | 515× vs
 interpreter**; startup baseline: silu-int 0.038s / cpython 0.028s / binary 0.0041s.
-8 programs at ≥0.9× (dict/knucleotide lead at 1.3×).
+10 of 15 rows at ≥0.9× (dict/knucleotide lead at 1.3×).
 
 **Runtime slimming note**: LTO + `-Wl,-dead_strip` strips unreferenced runtime
 functions at symbol granularity (fib binary 35KB vs 113KB monolithic). The
@@ -89,7 +89,7 @@ coarser-grained.
 | 10-25 | dead_strip linking (binary size 3×↓) | — | — |
 | 10-25 | Match-class pattern narrowing: `case JInt(n)` payload static binding | 78→75ms | — |
 | 10-25 | **Borrowed str parameters**: fixed per-recursion deep copy of the whole document | **78.7→8.3ms (9.5×)** | — |
-| 10-25 | Fresh report (all fixes) | 10.7ms (0.4×) | **0.9× (overtakes)** |
+| 10-25 | Fresh report (all fixes) | 10.7ms (0.4×) | **0.9× (parity range)** |
 
 Two attributed remaining gaps:
 

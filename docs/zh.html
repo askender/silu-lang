@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Silu — Rust 的速度，Z3 的证明</title>
+<title>Silu — Python 语法的自举编译型语言</title>
 <style>
 :root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.7}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
 .container{max-width:1100px;margin:0 auto;padding:0 2rem}
-.hero{text-align:center;padding:7rem 2rem 5rem;background:linear-gradient(180deg,#161b22 0%,#0d1117 100%)}
+.hero{text-align:center;padding:6rem 2rem 4.5rem;background:linear-gradient(180deg,#161b22 0%,#0d1117 100%)}
 .hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:-.03em;margin-bottom:1rem}
 .hero h1 .accent{color:var(--accent)}
-.hero p.tagline{font-size:clamp(1.1rem,2.5vw,1.5rem);color:var(--dim);max-width:750px;margin:0 auto 2.5rem}
-.badges{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem}
+.hero p.tagline{font-size:clamp(1.1rem,2.5vw,1.5rem);color:var(--dim);max-width:700px;margin:0 auto 2rem}
+.badges{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem}
 .badge{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;border-radius:9999px;border:1px solid var(--border);background:var(--card);font-size:.95rem;color:var(--fg);text-decoration:none;transition:border-color .2s}
 .badge:hover{border-color:var(--accent)}
 .badge .label{color:var(--dim);font-size:.8rem}
@@ -28,12 +28,13 @@ section h2{font-size:1.8rem;margin-bottom:2rem;letter-spacing:-.02em}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.8rem}
 .card h3{font-size:1.1rem;margin-bottom:.7rem;color:var(--accent)}
 .card p{color:var(--dim);font-size:.95rem}
-.code-block{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.5rem;font-family:'SF Mono',Consolas,monospace;font-size:.85rem;overflow-x:auto;margin:1.5rem 0;line-height:1.7}
+.code-block{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.5rem;font-family:'SF Mono',Consolas,monospace;font-size:.85rem;overflow-x:auto;margin:1.5rem 0;line-height:1.7;text-align:left}
 .code-block .prompt{color:var(--dim)}
 .code-block .kw{color:#ff7b72}
 .code-block .str{color:#a5d6ff}
 .code-block .num{color:#d2a8ff}
 .code-block .fn{color:#d2a8ff}
+.code-block .cm{color:var(--dim)}
 .code-block .ok{color:var(--accent2)}
 .code-block .err{color:#f85149}
 .table-wrap{overflow-x:auto}
@@ -50,6 +51,8 @@ td.slower{color:#e3b341}
 .feature-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(88,166,255,.1);flex-shrink:0}
 .feature h3{margin-bottom:.4rem;font-size:1.05rem}
 .feature p{color:var(--dim);font-size:.92rem}
+.note{color:var(--dim);margin-top:1rem;font-size:.85rem}
+.status-line{color:var(--dim);font-size:.85rem;margin-top:1.5rem}
 footer{padding:3rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border)}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
@@ -65,52 +68,69 @@ a:hover{text-decoration:underline}
 <div class="hero">
   <div class="container">
     <h1>Silu<span class="accent">.</span></h1>
-    <p class="tagline">编译型语言——运行速度与 <strong>Rust</strong> 持平，并能<strong>证明自己的代码不会崩溃</strong>。</p>
+    <p class="tagline">简明 Python 语法的自举编译型语言。</p>
     <div class="badges">
-      <a class="badge" href="#benchmarks"><span class="label">vs Rust</span> <span class="value">1.0×</span></a>
-      <a class="badge" href="#prover"><span class="label">证明器</span> <span class="value">Z3</span></a>
-      <a class="badge" href="#selfhost"><span class="label">自举</span> <span class="value">25秒</span></a>
+      <a class="badge" href="#hello"><span class="label">语法</span> <span class="value">Python</span></a>
+      <a class="badge" href="#selfhost"><span class="label">自举</span> <span class="value">不动点验证</span></a>
       <a class="badge" href="#compile"><span class="label">编译</span> <span class="value">0.11s</span></a>
+      <a class="badge" href="#prover"><span class="label">证明</span> <span class="value">内置</span></a>
     </div>
+    <div class="code-block" id="hello">
+<div><span class="kw">def</span> <span class="fn">greet</span>(name: <span class="num">str</span>) -> <span class="num">str</span>:</div>
+<div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="str">"Hello, "</span> + name + <span class="str">"!"</span></div>
+<div>&nbsp;</div>
+<div><span class="fn">print</span>(<span class="fn">greet</span>(<span class="str">"Silu"</span>))</div>
+<div>&nbsp;</div>
+<div><span class="prompt">$</span> ./siluc hello.si -o hello&nbsp;&nbsp;&nbsp;<span class="cm"># 0.11 秒，默认 LTO</span></div>
+<div><span class="prompt">$</span> ./hello</div>
+<div>Hello, Silu!</div>
+    </div>
+    <p class="status-line">早期项目——现已发布文档；二进制即将发布；源码将分阶段公开。</p>
   </div>
 </div>
 
 <section id="benchmarks">
   <div class="container">
-    <h2>性能基准</h2>
+    <h2>写起来是 Python，跑起来是原生码</h2>
     <div class="stat-row">
-      <div class="stat"><div class="num">1.0×</div><div class="label">vs Rust（几何平均）</div></div>
-      <div class="stat"><div class="num">14×</div><div class="label">vs CPython</div></div>
-      <div class="stat"><div class="num">500×</div><div class="label">vs 参考解释器</div></div>
+      <div class="stat"><div class="num">15.6×</div><div class="label">vs CPython——15 程序几何平均</div></div>
+      <div class="stat"><div class="num">0.004s</div><div class="label">原生启动</div></div>
+      <div class="stat"><div class="num">0.9×</div><div class="label">vs 手写 Rust 孪生（同报告参考值）</div></div>
     </div>
     <div class="table-wrap">
     <table>
-      <tr><th>程序</th><th>Silu 原生</th><th>Rust</th><th>vs Rust</th></tr>
-      <tr><td>wordcount（词频统计）</td><td>8.8ms</td><td>15.3ms</td><td class="speedup">1.8×</td></tr>
-      <tr><td>dict（字典操作）</td><td>2.2ms</td><td>2.8ms</td><td class="speedup">1.3×</td></tr>
-      <tr><td>knucleotide（DNA 序列）</td><td>11.0ms</td><td>14.8ms</td><td class="speedup">1.3×</td></tr>
-      <tr><td>mandelbrot（分形渲染）</td><td>2.4ms</td><td>2.7ms</td><td class="speedup">1.2×</td></tr>
-      <tr><td>fib（递归斐波那契）</td><td>2.5ms</td><td>2.8ms</td><td class="speedup">1.1×</td></tr>
-      <tr><td>spectral（范数计算）</td><td>4.2ms</td><td>4.4ms</td><td class="speedup">1.05×</td></tr>
-      <tr><td>arith（算术循环）</td><td>3.3ms</td><td>3.4ms</td><td class="speedup">1.03×</td></tr>
-      <tr><td>list（链表操作）</td><td>2.4ms</td><td>2.4ms</td><td>1.0×</td></tr>
-      <tr><td>jsonparse（JSON 解析）</td><td>8.7ms</td><td>6.4ms</td><td class="slower">0.7×</td></tr>
+      <tr><th>程序</th><th>CPython</th><th>Silu 原生</th><th>vs CPython</th><th>Rust（参考）</th></tr>
+      <tr><td>arith（算术循环）</td><td>80ms</td><td>3.3ms</td><td class="speedup">24.4×</td><td>2.9ms</td></tr>
+      <tr><td>dict（字典操作）</td><td>34ms</td><td>2.2ms</td><td class="speedup">15.6×</td><td>2.8ms</td></tr>
+      <tr><td>fannkuch（排列计数）</td><td>32ms</td><td>2.6ms</td><td class="speedup">12.1×</td><td>2.5ms</td></tr>
+      <tr><td>fib（递归斐波那契）</td><td>36ms</td><td>2.5ms</td><td class="speedup">14.2×</td><td>2.8ms</td></tr>
+      <tr><td>float（浮点循环）</td><td>52ms</td><td>2.7ms</td><td class="speedup">19.3×</td><td>2.8ms</td></tr>
+      <tr><td>jsonparse（JSON 解析）</td><td>47ms</td><td>7.4ms</td><td class="speedup">6.3×</td><td>3.6ms</td></tr>
+      <tr><td>jsonparse_json（Json 孪生）</td><td>42ms</td><td>7.9ms</td><td class="speedup">5.3×</td><td>—</td></tr>
+      <tr><td>knucleotide（DNA 序列）</td><td>889ms</td><td>11.0ms</td><td class="speedup">80.9×</td><td>14.8ms</td></tr>
+      <tr><td>list（列表操作）</td><td>35ms</td><td>2.4ms</td><td class="speedup">14.8×</td><td>2.4ms</td></tr>
+      <tr><td>mandelbrot（分形渲染）</td><td>41ms</td><td>2.4ms</td><td class="speedup">17.2×</td><td>2.7ms</td></tr>
+      <tr><td>nbody（天体模拟）</td><td>214ms</td><td>5.7ms</td><td class="speedup">37.6×</td><td>5.4ms</td></tr>
+      <tr><td>spectral（范数计算）</td><td>288ms</td><td>7.4ms</td><td class="speedup">38.7×</td><td>4.7ms</td></tr>
+      <tr><td>string（字符串拼接）</td><td>49ms</td><td>3.0ms</td><td class="speedup">16.1×</td><td>2.2ms</td></tr>
+      <tr><td>trees（二叉树）</td><td>31ms</td><td>3.2ms</td><td class="speedup">9.8×</td><td>3.4ms</td></tr>
+      <tr><td>wordcount（词频统计）</td><td>88ms</td><td>23.3ms</td><td class="speedup">3.8×</td><td>13.7ms</td></tr>
     </table>
     </div>
-    <p style="color:var(--dim);margin-top:1rem;font-size:.85rem">15 个程序，所有输出在六个平面（解释器 / CPython / 原生编译 / Rust / C / 自举解释器）上逐字节一致。完整方法论文档：<a href="benchmarks_zh.html">评测文档</a></p>
+    <p class="note">v1.9.0 报告（2026-10-25），Apple Silicon，3 轮中位数（含进程启动）；四个平面（解释器 / CPython / 原生 / Rust）输出逐字节一致。对 Rust 孪生的几何平均为 0.9×——部分程序更快，部分更慢。后续工具链更新（默认 LTO 链接、字符串池化、缓冲复用）进一步改善了 jsonparse、spectral 与 wordcount；见<a href="benchmarks_zh.html">评测文档</a>。</p>
   </div>
 </section>
 
 <section id="prover" style="background:var(--card)">
   <div class="container">
-    <h2>证明器</h2>
+    <h2>给出证明，或者给出反例</h2>
     <div class="grid">
       <div>
         <div class="feature">
           <div class="feature-icon">⚡</div>
           <div>
             <h3>真正的证明，不是采样</h3>
-            <p><code>a / (b*b + 1)</code> 被证明安全——Z3 通过代数推理得出除数恒 ≥ 1，覆盖<strong>所有</strong>可能的输入。</p>
+            <p><code>a / (b*b + 1)</code> 被证明安全——Z3 通过代数推理得出除数恒 ≥ 1，覆盖<strong>所有</strong>可能的输入。模糊测试说不出这句话。</p>
           </div>
         </div>
         <div class="feature">
@@ -127,6 +147,7 @@ a:hover{text-decoration:underline}
             <p><code>require(b != 0)</code> 声明函数的定义域。函数<strong>独立</strong>证明安全；调用点另行检查是否尊重契约。删除任何调用方不会影响函数自身的证明。</p>
           </div>
         </div>
+        <p class="note">当前范围：除零、列表/字符串下标越界、字典键。循环按有限界验证；求解器无法判定的义务会被明确报告为未证明——绝不静默视为安全。</p>
       </div>
       <div class="code-block">
 <div><span class="prompt">$</span> cat safe.si</div>
@@ -152,19 +173,19 @@ a:hover{text-decoration:underline}
 
 <section id="selfhost">
   <div class="container">
-    <h2>自举编译器</h2>
+    <h2>自举，而且可以证明这一点</h2>
     <div class="grid">
       <div class="card">
         <h3>编译器用 Silu 自己写的</h3>
-        <p>词法分析、语法分析、IR 生成器、LLVM 代码生成——全部用 Silu 编写，并被自身编译为原生二进制。不动点证明（自举转换器逐字节复现自己的构建输出）在测试套件中持续运行。</p>
+        <p>词法分析、语法分析、IR 生成器、LLVM 代码生成——全部用 Silu 编写，并被自身编译为原生二进制。不动点检查（自举转换器逐字节复现自己的构建输出）在测试套件中持续运行。</p>
       </div>
       <div class="card">
         <h3>一条命令完成自举</h3>
         <p><code>silu bootstrap</code> 从源码构建零 Python 工具链，约 25 秒。之后每次编译只需 <code>./siluc file.si -o prog</code>——0.11 秒，默认 LTO。</p>
       </div>
       <div class="card">
-        <h3>无 GC，无借用检查器</h3>
-        <p>静态类型注解决定内存表示：<code>int</code> 留在栈上，<code>str</code> 使用 Rust String 风格的独占缓冲，容器使用无装箱的原始存储。纪律在编译器里，不在程序员身上。</p>
+        <h3>所有权，无 GC</h3>
+        <p>静态注解决定内存表示：<code>int</code> 留在栈上，<code>str</code> 是作用域退出时释放的独占缓冲，容器无装箱。赋值即所有权转移。取舍——包括当前刻意从简的动态平面——写在<a href="memory_zh.html">内存文档</a>里。</p>
       </div>
     </div>
   </div>
@@ -174,9 +195,9 @@ a:hover{text-decoration:underline}
   <div class="container">
     <h2>极速编译</h2>
     <div class="stat-row">
-      <div class="stat"><div class="num">0.11s</div><div class="label">siluc（默认 LTO）</div></div>
-      <div class="stat"><div class="num">0.13s</div><div class="label">rustc（release）</div></div>
+      <div class="stat"><div class="num">0.11s</div><div class="label">siluc 单次编译（默认 LTO）</div></div>
       <div class="stat"><div class="num">25s</div><div class="label">一次性自举</div></div>
+      <div class="stat"><div class="num">~2ms</div><div class="label">二进制启动</div></div>
     </div>
     <div class="code-block">
 <div><span class="prompt">$</span> ./siluc hello.si -o hello</div>
