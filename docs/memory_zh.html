@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>内存管理 — Silu</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg);text-decoration:none}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
+.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap}
+.md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
+.md-nav a:hover{color:var(--fg);border-color:var(--accent);text-decoration:none}
+.md-nav a.home{color:var(--accent);font-weight:600}
+.md-body{max-width:920px;margin:0 auto;padding:5.5rem 2rem 4rem}
+.md-body h1{font-size:2rem;margin-bottom:1.5rem;color:var(--accent);letter-spacing:-.02em}
+.md-body h2{font-size:1.5rem;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.md-body h3{font-size:1.15rem;margin:2rem 0 .8rem}
+.md-body p{margin:.8rem 0;color:var(--fg)}
+.md-body li{margin:.4rem 0;color:var(--fg)}
+.md-body code{background:rgba(88,166,255,.1);color:var(--accent);padding:.15rem .4rem;border-radius:4px;font-family:'SF Mono',Consolas,monospace;font-size:.88em}
+.md-body pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.2rem;overflow-x:auto;margin:1.2rem 0}
+.md-body pre code{background:none;color:var(--fg);padding:0;font-size:.82rem;line-height:1.6}
+.md-body table{width:100%;border-collapse:collapse;font-size:.9rem;margin:1.5rem 0}
+.md-body th{text-align:left;padding:.6rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
+.md-body td{padding:.5rem 1rem;border-bottom:1px solid var(--border)}
+.md-body blockquote{border-left:3px solid var(--accent);padding:.8rem 1.2rem;margin:1.2rem 0;color:var(--dim);background:rgba(88,166,255,.05);border-radius:0 8px 8px 0}
+.md-body strong{color:var(--accent2)}
+.md-body hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+.md-body ul,.md-body ol{padding-left:1.5rem}
+footer{padding:2.5rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border);margin-top:2rem}
+.md-nav a.active-page{color:var(--accent);border-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="md-nav"><a href="zh.html" class="home">🏠 首页</a><a href="benchmarks_zh.html">性能评测</a><a href="memory_zh.html" class="active-page">内存管理</a><a href="rfc_sum_types_zh.html">和类型 RFC</a><a href="symbolic_roadmap_zh.html">符号执行路线图</a><a href="interop_zh.html">C 互操作</a></div>
+<div class="lang-switch">
+  <a href="memory.html">EN</a>
+  <a href="memory_zh.html" class="active">中文</a>
+</div>
+<div class="md-body">
+<h1>内存管理：Silu 的两套纪律（2026-10-25, v1.9.0 实测）</h1>
+<blockquote>Silu 没有 GC。静态世界（typed 路径）用 <strong>Rust 式所有权规则</strong>，<br>动态世界（pyobj）<strong>故意泄漏</strong>。本文给出机制、实测数据与<br>"为什么静态世界不需要借用检查器"的分析。</blockquote>
+<h2>一、静态世界：所有权规则（无 GC，无借用检查器）</h2>
+<p>类型化路径不产生需要追踪的垃圾——每块内存从出生就有唯一主人：</p>
+<table>
+<thead><tr>
+<th>类型</th>
+<th>表示</th>
+<th>生命周期管理</th>
+</tr></thead><tbody>
+<tr><td><code>int</code> / <code>float</code> / <code>bool</code></td><td>栈值（i64/double/i1）</td><td>无堆分配</td></tr>
+<tr><td><code>str</code>（rawstr）</td><td>独占堆缓冲 <code>{len,cap,data,cp}</code></td><td><strong>完整 drop 体系</strong>：赋值拷贝时旧缓冲 free；函数退出统一 drop 全部局部槽（<code>_emit_local_rawstr_drops</code>）；传参<strong>借用零拷贝</strong>（被调方只读，<code>s += x</code> 重绑走 concat 新建——Python 别名语义精确成立：<code>h(d)</code> 返回 "abx" 而 <code>d</code> 保持 "ab"）</td></tr>
+<tr><td><code>list[int]</code> 等 rawlist</td><td>独占结构体</td><td>赋值即所有权转移；无作用域 drop（静态程序容器通常一次构建）</td></tr>
+<tr><td><code>dict[int,int]</code> 等 rawdict</td><td>独占哈希表</td><td>同上</td></tr>
+</tbody></table>
+<p><strong>实测</strong>（Apple Silicon）：</p>
+<ul><li>200 万次纯标量循环：RSS 1MB（零分配）</li><li>20 万次字符串拼接循环：RSS 27MB（瞬态拷贝正常回收）</li><li>5 万次 <code>row = row + "*"</code>：2.3ms（amortized O(1) 原地 append）</li></ul>
+<h2>二、动态世界：故意泄漏（leak by design）</h2>
+<p>pyobj 盒（<code>{i32 tag, i8* data}</code>；<code>create_int/str/list/dict/instance</code>） malloc 后<strong>永不 free</strong>——运行时不存在用户盒的释放路径。</p>
+<p><strong>实测</strong>：30 万次循环、每次建一个小 list + dict，RSS 172MB （~570B/迭代，纯泄漏）。</p>
+<p>这是有意的取舍：</p>
+<ul><li>引用计数 = 每次赋值/传参/装箱插计数指令，恰好在已优化到</li></ul>
+<p>0.9× Rust 的热路径上全部买单；</p>
+<ul><li>基准与 CLI 风格程序活动集有界，泄漏可接受——<strong>批处理哲学</strong></li></ul>
+<p>（程序结束，操作系统统一回收；类 arena 分配器用法）。</p>
+<h2>三、解释器平面</h2>
+<p><code>silu interpret</code> / <code>silu exec</code> / pycompat 跑在 CPython 上： Python 的引用计数 + 分代 GC，与语言语义一致（四平面验证因此 能抓住编译面的内存 bug——例如 v1.7.1 写回回归就是解释器平面 先暴露的）。</p>
+<h2>四、为什么静态世界不需要借用检查器？</h2>
+<p>Rust 借用检查器解决的问题是：**同一块内存可能有多个名字且 都可能写**。Rust 的答案是编译期证明"要么唯一写者，要么多个 只读者"（borrow checker）。</p>
+<p>Silu 静态世界不需要它，因为语言语义更保守——三个根本差异：</p>
+<ol><li><strong>不可变值语义</strong>。<code>str</code> 逻辑上不可变（Python 语义）：<code>s += x</code></li></ol>
+<p>是重绑（新串），不是原地写。原地 append 只是编译器在 <strong>槽独占</strong>前提下的优化发射；一旦槽可能是借来的（str 参数）， 发射退回 concat 新建（<code>_borrowed_strs</code> 集合跟踪）。"写"这个 动作永远不发生在共享内存上。</p>
+<ol><li><strong>共享即只读</strong>。str 传参借用 = 被调方拿到指针但类型系统保证</li></ol>
+<p>它只能读（<code>s[i]</code>、<code>len</code>、切片都产新值）。这是借用检查器的 核心规则，但 Silu 不需要检查器来强制——**语言里根本没有 通过共享引用写的语法**（无 <code>&amp;mut</code>，无原地变异方法）。Rust 需要检查器是因为它*提供*了 <code>&amp;mut T</code>；Silu 不提供。</p>
+<ol><li><strong>容器的引用语义对齐 Python</strong>。<code>list</code>/<code>dict</code> 赋值是别名</li></ol>
+<p>（Python 语义），共享可变——但这正是 Python/Rust-<code>Rc&lt;RefCell&gt;</code> 式的运行时对象，靠独占 malloc + 程序员心智模型管理，静态 程序里它们通常一次构建终身使用（基准 8/14 静态程序里容器 装载后从不重新绑类型）。</p>
+<p>一句话：**Rust 要检查借用，因为它把"可变别名"作为语言能力 交给你；Silu 静态子集不给你这个能力，所以无从检查、也无需 检查。**代价是表达力上限（写不了 Rust 那种零拷贝原地算法的 通用形式——原地 append 只对槽独占这个窄窗口成立）；换来的是 编译器无需借用检查器即可保证内存安全。</p>
+<h3>附：Rust vs Silu 静态世界速览</h3>
+<table>
+<thead><tr>
+<th>维度</th>
+<th>Rust</th>
+<th>Silu 静态世界</th>
+</tr></thead><tbody>
+<tr><td>内存安全由谁保证</td><td>借用检查器（编译期数据流分析）</td><td>语言语义（值不可变 + 无共享写语法）</td></tr>
+<tr><td>可变别名</td><td>提供（<code>&amp;mut T</code>，需检查）</td><td>不提供（无对应语法）</td></tr>
+<tr><td>借用规则</td><td>NLL 检查器推导（有时与意图不符，需改结构）</td><td>无需推导——规则内建于发射策略</td></tr>
+<tr><td>原地变异</td><td>通用（<code>&amp;mut vec</code> 直接 push）</td><td>窄窗口优化（仅槽独占可证时发射；借来的槽自动退回 concat）</td></tr>
+<tr><td>共享引用</td><td><code>&amp;T</code>（只读，检查器强制）</td><td>str 借用传参（只读，<strong>语法上</strong>只读——没有写它的方法）</td></tr>
+<tr><td>容器别名</td><td>受限（<code>Rc&lt;RefCell&gt;</code> 逃生舱）</td><td>Python 语义（自由别名，运行时对象）</td></tr>
+<tr><td>生命周期标注</td><td><code>'a</code> 泛型参数</td><td>不存在——值语义让生命周期 = 词法作用域</td></tr>
+<tr><td>表达力上限</td><td>高（零拷贝原地算法的通用形式）</td><td>低（原地优化是编译器私事，程序员不可申请）</td></tr>
+<tr><td>编译器复杂度</td><td>借用检查器本身是研究级组件</td><td>发射期 3 个 set 跟踪（owned/borrowed/scope-local）</td></tr>
+</tbody></table>
+<p>一句话对比：Rust 把内存安全做成<strong>编译器检查的权限系统</strong>， Silu 把它做成<strong>语言不给危险语法的事实</strong>——前者换来表达力， 后者换来编译器简单（而这个编译器本身是 Silu 写的 1.2 万行、 能逐字节重建自己的代码，简单性会复利）。</p>
+<h2>五、将来要治吗（按性价比）</h2>
+<ol><li><strong>sum-type 路线二</strong>：收窄动态世界，泄漏表面积随 pyobj 用量</li></ol>
+<p>一起缩（3-4 周级，也是 jsonparse/wordcount 性能的根治）。</p>
+<ol><li><strong>rawlist/rawdict 作用域 drop</strong>：照抄 rawstr 的</li></ol>
+<p><code>_emit_local_rawstr_drops</code> 配方（1-2 天）。</p>
+<ol><li><strong>pyobj 引用计数</strong>：盒布局加计数头、全部装箱/传递插桩——</li></ol>
+<p>代价最大，仅长期驻留服务需要；当前无动机。</p>
+<p>三项均不在 todo（无性能/正确性压力）。</p>
+<hr>
+<p>附：复现命令——</p>
+<pre><code>python -m silu build /tmp/gc1.si -o gc1 &amp;&amp; /usr/bin/time -l ./gc1   # 标量 1MB
+python -m silu build /tmp/gc2.si -o gc2 &amp;&amp; /usr/bin/time -l ./gc2   # str 27MB
+python -m silu build /tmp/gc3.si -o gc3 &amp;&amp; /usr/bin/time -l ./gc3   # pyobj 172MB（泄漏）</code></pre>
+</div>
+<footer><a href="https://github.com/askender/silu-lang">GitHub</a> · <a href="memory.html">English</a></footer>
+</body>
+</html>

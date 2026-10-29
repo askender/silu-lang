@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>和类型 RFC — Silu</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg);text-decoration:none}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
+.md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap}
+.md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
+.md-nav a:hover{color:var(--fg);border-color:var(--accent);text-decoration:none}
+.md-nav a.home{color:var(--accent);font-weight:600}
+.md-body{max-width:920px;margin:0 auto;padding:5.5rem 2rem 4rem}
+.md-body h1{font-size:2rem;margin-bottom:1.5rem;color:var(--accent);letter-spacing:-.02em}
+.md-body h2{font-size:1.5rem;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.md-body h3{font-size:1.15rem;margin:2rem 0 .8rem}
+.md-body p{margin:.8rem 0;color:var(--fg)}
+.md-body li{margin:.4rem 0;color:var(--fg)}
+.md-body code{background:rgba(88,166,255,.1);color:var(--accent);padding:.15rem .4rem;border-radius:4px;font-family:'SF Mono',Consolas,monospace;font-size:.88em}
+.md-body pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.2rem;overflow-x:auto;margin:1.2rem 0}
+.md-body pre code{background:none;color:var(--fg);padding:0;font-size:.82rem;line-height:1.6}
+.md-body table{width:100%;border-collapse:collapse;font-size:.9rem;margin:1.5rem 0}
+.md-body th{text-align:left;padding:.6rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
+.md-body td{padding:.5rem 1rem;border-bottom:1px solid var(--border)}
+.md-body blockquote{border-left:3px solid var(--accent);padding:.8rem 1.2rem;margin:1.2rem 0;color:var(--dim);background:rgba(88,166,255,.05);border-radius:0 8px 8px 0}
+.md-body strong{color:var(--accent2)}
+.md-body hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+.md-body ul,.md-body ol{padding-left:1.5rem}
+footer{padding:2.5rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border);margin-top:2rem}
+.md-nav a.active-page{color:var(--accent);border-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="md-nav"><a href="zh.html" class="home">🏠 首页</a><a href="benchmarks_zh.html">性能评测</a><a href="memory_zh.html">内存管理</a><a href="rfc_sum_types_zh.html" class="active-page">和类型 RFC</a><a href="symbolic_roadmap_zh.html">符号执行路线图</a><a href="interop_zh.html">C 互操作</a></div>
+<div class="lang-switch">
+  <a href="rfc_sum_types.html">EN</a>
+  <a href="rfc_sum_types_zh.html" class="active">中文</a>
+</div>
+<div class="md-body">
+<h1>RFC：类型化 Sum Type（带标签联合）——异构容器的类型归宿</h1>
+<p>状态：待评审（2026-10-27）。目标：通过给异构容器一个类型化表示 来收掉最后的基准差距（jsonparse 0.4× vs Rust），并给语言补上与 match 类窄化并列的 Rust 核心特性。</p>
+<h2>1. 问题</h2>
+<p><code>items: list</code> 在元素混合时（JSON 树中的 int/str/list/dict）无法给 出类型参数。这类容器保持 pyobj：每个元素花费一个 <code>{tag, ptr}</code> 盒 分配，每次读取一次 tag 检查加拆箱，容器操作走动态 list/dict 运行时。 jsonparse 的 10.7ms 中有 6ms 花在这上面（pyobj 构造是与 Rust 的 serde_json::Value 之间的残余差距）。</p>
+<p>pyobj 盒本身已经是带标签联合——问题在于它是每值一次堆分配加 payload 指针间接，而且装它的容器是全动态的。缺的是用户可声明的 sum type，配紧凑的单块布局和其上的类型化容器。</p>
+<h2>2. 语法面</h2>
+<p>用新的 <code>union</code> 声明（沿用既定的"无继承、仅注解字段"类模型）：</p>
+<pre><code>union Json:
+    null
+    bool
+    int
+    float
+    str
+    list[Json]
+    dict[str, Json]
+
+def parse_value(s: str, pos: list[int]) -&gt; Json:
+    ...
+    return [v for ...]          # list[Json] 构造
+
+def sum_tree(v: Json) -&gt; int:
+    match v:
+        case int:        # 一分支窄化 + 拆箱
+            return v + 1
+        case list[Json]:
+            total = 0
+            for item in v:
+                total += sum_tree(item)
+            return total</code></pre>
+<ul><li><code>union Name:</code> 的成员是种类，不是字段。v1 支持的成员：<code>null</code>、</li></ul>
+<p><code>bool</code>、<code>int</code>、<code>float</code>、<code>str</code>、<code>list[T]</code>、<code>dict[K, V]</code>（T/V 可以 是联合自身——JSON 需要的递归场景）。</p>
+<ul><li>注解 <code>x: Json</code> / <code>list[Json]</code> / <code>dict[str, Json]</code> 驱动一切下游</li></ul>
+<p>——与现有注解相同的权威模型。</p>
+<h2>3. 表示</h2>
+<p>联合类型的值是一个堆块：</p>
+<pre><code>{i32 tag, i64 payload}   # 16 字节，每值一次 malloc</code></pre>
+<ul><li>标量成员内联携带值（bool 是 i1-in-i64，int 是 i64，float 是位模式）</li><li><code>str</code> 携带一个 rawstr*（owned；递归释放）</li><li><code>list[T]</code> 携带一个 rawlist-of-payload-pointer*（元素是联合块）</li><li><code>dict[K, V]</code> 携带一个 rawdict 变体</li></ul>
+<p>标签编号即声明顺序，0 = 第一个成员。无参成员（<code>null</code>）不需要 payload。这是 serde_json::Value 的设计：enum + Box'd Vec/Map， 区别在于我们的容器复用既有的 rawlist/rawdict 开放寻址机制。</p>
+<h2>4. 运行时面（发射为 <code>_emit_tagged_*</code> 家族）</h2>
+<ul><li><code>tagged_new_scalar(tag, bits) -&gt; blk*</code></li><li><code>tagged_new_str(tag, rawstr*) -&gt; blk*</code></li><li><code>tagged_new_list(tag, rawlist*) -&gt; blk*</code></li><li><code>tagged_tag(blk*) -&gt; i32</code></li><li><code>tagged_bits(blk*) -&gt; i64</code></li><li><code>tagged_str(blk*) -&gt; rawstr*</code>（借用读）</li><li><code>tagged_list(blk*) -&gt; rawlist*</code>（借用读）</li><li><code>tagged_free(blk*)</code>（递归释放；JSON 是树形，构造上无环）</li></ul>
+<p>借用纪律完全遵循 v1.7.1 规则：读取是借用指针，重绑 owned 槽只在 槽是 owned 时释放旧块（<code>_owned_strs</code> 推广为 <code>_owned_tagged</code>）， 函数退出 drop 全部 owned 槽，被调方永不释放借用参数。</p>
+<h2>5. 编译路径</h2>
+<ol><li>IR：<code>union Json: ...</code> 脱糖为 class_def，其"字段"是成员描述；</li></ol>
+<p>前端记录 <code>union_members["Json"] = [(name, member_kind), ...]</code>。</p>
+<ol><li><code>_annotation_kind</code>：<code>Json</code> 解析为 kind <code>"tagged:Json"</code>；</li></ol>
+<p><code>list[Json]</code> → <code>rawlist_tagged</code>，<code>dict[str, Json]</code> → <code>rawdict_str_tagged</code>。</p>
+<ol><li>构造：元素 kind 为 tagged 的 list 字面量逐元素发射</li></ol>
+<p><code>tagged_new_*</code> + rawlist_tagged 构建。</p>
+<ol><li>窄化：<code>match v: case int:</code> 复用 v1.7 match-class 窄化——case</li></ol>
+<p>测试 <code>tagged_tag</code> 对成员的标签常量，然后 body 里 <code>v</code> 重定型为 成员 kind。</p>
+<ol><li><code>list[Json]</code> 的下标/迭代产出 kind <code>"tagged:Json"</code>（走与</li></ol>
+<p>v1.11.3 下标推断相同的 <code>RAWLIST_KINDS</code> 表，新加一行）。</p>
+<h2>6. 分阶段交付（字节门禁纪律）</h2>
+<ul><li>S0 探针：手写 <code>tagged_new/tagged_tag/tagged_bits</code> 发射器 + 一个</li></ul>
+<p>20 行 .si 用内联 IR 调用，测一个构造循环 vs pyobj。≥2× 才继续。</p>
+<ul><li>S1 运行时：完整 <code>_emit_tagged_*</code> 家族 + rawlist_tagged 元素族</li></ul>
+<p>（仅发射器；语料字节一致，因为没有程序到达它们）。</p>
+<ul><li>S2 前端 + 注解：union 解析、kind 解析、构造/窄化发射；新测试；</li></ul>
+<p>语料不变（opt-in 语法）。</p>
+<ul><li>S3 四平面：flatten/.si 子集；固定点重建；jsonparse.si 改写为</li></ul>
+<p>Json union 版本（benchmark 变更，输出对拍验证）。</p>
+<ul><li>S4 所有权审计：借用读规则、退出 drop、双释放探针测试。</li></ul>
+<h2>7. 预期成果</h2>
+<p>jsonparse：pyobj 盒（每值 2 次 malloc + payload 间接）→ 一个 16 字节 块（str 叶子仍需其 data 块）和类型化容器。从 wordcount 算术预测 （每消除一个盒 85ns → ~27ns）：10.7ms → ~5-6ms，即 vs Rust serde_json 基线 1.0-1.2×。次级：任何解析器/AST 遍历程序在用户空间 免费获得同一表示。</p>
+<h2>8. 风险 / 开放问题</h2>
+<ul><li>表示冻结：16 字节块在 C-ABI export 后很难改；S3 落地前保持</li></ul>
+<p><code>tagged_*</code> 不进 <code>@export</code>。</p>
+<ul><li>错误模式：窄化错误标签必须响亮 abort（与下标边界同政策）——</li></ul>
+<p>不静默返回默认值。</p>
+<ul><li>v1 仅一个联合每元素类型族（Json 形态）；任意成员的用户联合</li></ul>
+<p>是明确的第二阶段。</p>
+<ul><li>递归 <code>dict[str, Json]</code> 值在 rawdict 内需要 owned-slot 清理钩子</li></ul>
+<p>（<code>rawdict_str_tagged_clear</code> 释放值块）——多一个发射器，同配方。</p>
+<h2>9. 非目标</h2>
+<ul><li>联合上的泛型、C-ABI tagged 导出、环回收（联合值构造上是树）。</li></ul>
+</div>
+<footer><a href="https://github.com/askender/silu-lang">GitHub</a> · <a href="rfc_sum_types.html">English</a></footer>
+</body>
+</html>

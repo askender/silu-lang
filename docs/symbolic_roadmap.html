@@ -8,55 +8,15 @@
 :root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
-.container{max-width:1100px;margin:0 auto;padding:0 2rem}
-.hero{text-align:center;padding:7rem 2rem 5rem;background:linear-gradient(180deg,#161b22 0%,#0d1117 100%)}
-.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:-.03em;margin-bottom:1rem}
-.hero h1 .accent{color:var(--accent)}
-.hero p.tagline{font-size:clamp(1.1rem,2.5vw,1.5rem);color:var(--dim);max-width:700px;margin:0 auto 2.5rem}
-.badges{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem}
-.badge{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;border-radius:9999px;border:1px solid var(--border);background:var(--card);font-size:.95rem;color:var(--fg);text-decoration:none;transition:border-color .2s}
-.badge:hover{border-color:var(--accent)}
-.badge .label{color:var(--dim);font-size:.8rem}
-.badge .value{font-weight:600;color:var(--accent)}
-.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
-.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
-.lang-switch a:hover{color:var(--fg)}
-.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
-section{padding:4rem 0}
-section h2{font-size:1.8rem;margin-bottom:2rem;letter-spacing:-.02em}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.8rem}
-.card h3{font-size:1.1rem;margin-bottom:.7rem;color:var(--accent)}
-.card p{color:var(--dim);font-size:.95rem}
-.code-block{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.5rem;font-family:'SF Mono',Consolas,monospace;font-size:.85rem;overflow-x:auto;margin:1.5rem 0;line-height:1.7}
-.code-block .prompt{color:var(--dim)}
-.code-block .kw{color:#ff7b72}
-.code-block .str{color:#a5d6ff}
-.code-block .num{color:#d2a8ff}
-.code-block .fn{color:#d2a8ff}
-.code-block .ok{color:var(--accent2)}
-.code-block .err{color:#f85149}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.9rem}
-th{text-align:left;padding:.7rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
-td{padding:.6rem 1rem;border-bottom:1px solid var(--border)}
-td.speedup{font-weight:600;color:var(--accent2)}
-td.slower{color:#e3b341}
-.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin:2.5rem 0}
-.stat{text-align:center;padding:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:12px}
-.stat .num{font-size:2.2rem;font-weight:800;color:var(--accent)}
-.stat .label{font-size:.85rem;color:var(--dim);margin-top:.4rem}
-.feature{display:flex;gap:1.2rem;margin-bottom:1.8rem}
-.feature-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(88,166,255,.1);flex-shrink:0}
-.feature h3{margin-bottom:.4rem;font-size:1.05rem}
-.feature p{color:var(--dim);font-size:.92rem}
-footer{padding:3rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border)}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
-
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg);text-decoration:none}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
 .md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap}
 .md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
-.md-nav a:hover{color:var(--fg);border-color:var(--accent)}
+.md-nav a:hover{color:var(--fg);border-color:var(--accent);text-decoration:none}
 .md-nav a.home{color:var(--accent);font-weight:600}
 .md-body{max-width:920px;margin:0 auto;padding:5.5rem 2rem 4rem}
 .md-body h1{font-size:2rem;margin-bottom:1.5rem;color:var(--accent);letter-spacing:-.02em}
@@ -71,142 +31,74 @@ a:hover{text-decoration:underline}
 .md-body th{text-align:left;padding:.6rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
 .md-body td{padding:.5rem 1rem;border-bottom:1px solid var(--border)}
 .md-body blockquote{border-left:3px solid var(--accent);padding:.8rem 1.2rem;margin:1.2rem 0;color:var(--dim);background:rgba(88,166,255,.05);border-radius:0 8px 8px 0}
-.md-body a{color:var(--accent);text-decoration:none}
-.md-body a:hover{text-decoration:underline}
 .md-body strong{color:var(--accent2)}
 .md-body hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
 .md-body ul,.md-body ol{padding-left:1.5rem}
+footer{padding:2.5rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border);margin-top:2rem}
+.md-nav a.active-page{color:var(--accent);border-color:var(--accent)}
 </style>
 </head>
 <body>
-<div class="md-nav"><a href="./" class="home">🏠 Home</a><a href="benchmarks.html">Benchmarks</a><a href="memory.html">Memory</a><a href="rfc_sum_types.html">Sum Types</a><a href="symbolic_roadmap.html">Symbolic</a><a href="interop.html">Interop</a></div>
+<div class="md-nav"><a href="./" class="home">🏠 Home</a><a href="benchmarks.html">Benchmarks</a><a href="memory.html">Memory</a><a href="rfc_sum_types.html">Sum Types RFC</a><a href="symbolic_roadmap.html" class="active-page">Symbolic Roadmap</a><a href="interop.html">C Interop</a></div>
 <div class="lang-switch">
-  <a href="./" class="active">EN</a>
-  <a href="zh.html">中文</a>
+  <a href="symbolic_roadmap.html" class="active">EN</a>
+  <a href="symbolic_roadmap_zh.html">中文</a>
 </div>
 <div class="md-body">
 <h1>Symbolic Execution Roadmap</h1>
-<p>Status: proposed (2026-10-27). The symbolic subsystem is <strong>kept by
-decision</strong> — it is not on any compilation critical path today, and
-this document is the plan for turning it from an experimental analyzer
-into a load-bearing tool.</p>
+<p>Status: proposed (2026-10-27). The symbolic subsystem is **kept by decision** — it is not on any compilation critical path today, and this document is the plan for turning it from an experimental analyzer into a load-bearing tool.</p>
 <h2>What exists today</h2>
-<ul>
-<li>~5,890 lines: <code>silu/symbolic_executor.py</code> (2,070), <code>symbolic_utils.py</code>
-  (~790), <code>symbolic/</code> package (condition/loop/builtin/z3/report utils),
-  <code>symbolic_pathlib.py</code> (execution-path manager)</li>
-<li>Entry points: <code>silu symbolic &lt;file&gt;</code> (CLI, lazy-imported so the z3 +
-  loguru chain costs nothing otherwise) and the Python API
-  (<code>SymbolicExecutor</code>, <code>execute_symbolic_from_file_with_executor</code>)</li>
-<li>Fast-layer coverage 20–60% per module; 13 dead functions removed in
-  the v1.11.2 quality pass, the remaining surface is live</li>
-<li>Dependencies: <code>z3-solver</code> (optional at runtime — Z3_AVAILABLE gates),
-  <code>loguru</code></li>
-</ul>
+<ul><li>~5,890 lines: <code>silu/symbolic_executor.py</code> (2,070), <code>symbolic_utils.py</code></li></ul>
+<p>(~790), <code>symbolic/</code> package (condition/loop/builtin/z3/report utils), <code>symbolic_pathlib.py</code> (execution-path manager)</p>
+<ul><li>Entry points: <code>silu symbolic &lt;file&gt;</code> (CLI, lazy-imported so the z3 +</li></ul>
+<p>loguru chain costs nothing otherwise) and the Python API (<code>SymbolicExecutor</code>, <code>execute_symbolic_from_file_with_executor</code>)</p>
+<ul><li>Fast-layer coverage 20–60% per module; 13 dead functions removed in</li></ul>
+<p>the v1.11.2 quality pass, the remaining surface is live</p>
+<ul><li>Dependencies: <code>z3-solver</code> (optional at runtime — Z3_AVAILABLE gates),</li></ul>
+<p><code>loguru</code></p>
 <h2>The proven recipe (v1.3, tests/test_symbolic_invariants.py)</h2>
-<p>The one place symbolic execution has already paid for itself:
-container-runtime invariants proved over ALL inputs, not samples.</p>
-<ol>
-<li>re-express the runtime operation as a Silu program over a symbolic
-   list header <code>{len, cap, items}</code> (the .si-level model of the C
-   runtime),</li>
-<li>let <code>SymbolicExecutor</code> explore paths,</li>
-<li>hand the obligations to Z3.</li>
-</ol>
-<p>Discharged this way: append preserves len/cap for all inputs, growth
-is monotone, negative subscripts read from <code>i + len</code>, in-bounds reads
-never panic and out-of-bounds always panics. The runtime history that
-motivated this (list_insert leaving capacity stale → heap overflow)
-is exactly the bug class the recipe kills.</p>
+<p>The one place symbolic execution has already paid for itself: container-runtime invariants proved over ALL inputs, not samples.</p>
+<ol><li>re-express the runtime operation as a Silu program over a symbolic</li></ol>
+<p>list header <code>{len, cap, items}</code> (the .si-level model of the C runtime),</p>
+<ol><li>let <code>SymbolicExecutor</code> explore paths,</li><li>hand the obligations to Z3.</li></ol>
+<p>Discharged this way: append preserves len/cap for all inputs, growth is monotone, negative subscripts read from <code>i + len</code>, in-bounds reads never panic and out-of-bounds always panics. The runtime history that motivated this (list_insert leaving capacity stale → heap overflow) is exactly the bug class the recipe kills.</p>
 <h2>Three application lines, cheapest first</h2>
 <h3>Phase 1 — extend the invariant gates to the raw families (cheap, direct reuse)</h3>
-<p>v1.3 covered the pyobj list runtime. The typed backend now has three
-more hand-written runtime families with the same bug surface:</p>
-<ul>
-<li><code>rawstr</code> (header <code>{len, cap, data}</code>): <code>rawstr_append</code> growth
-  monotone; <code>rawstr_slice</code> clamps match emission (I3/I4 analogues);
-  <code>rawstr_at_*</code> bounds</li>
-<li><code>rawdict</code> (entries + open-addressed index table): <code>rawdict_set</code>
-  preserves "slot holds entry_index+1, 0 = empty, -1 = deleted";
-  reindex preserves membership; <code>rawdict_del</code> tombstone discipline</li>
-<li><code>rawutf8</code> (cp_count/cp_offset): offset &lt; cp_count lands inside the
-  buffer; byte-length invariants</li>
-</ul>
-<p>Each is a new test class in <code>test_symbolic_invariants.py</code> following
-the v1.3 template: model header symbolically, execute the operation's
-reference semantics, discharge with Z3. The reference semantics are
-the exact expressions the emitters generate (<code>_emit_rawstr_core</code> and
-family), so a proof covers the emitted runtime.</p>
-<p><strong>Exit criterion:</strong> rawstr/rawdict/rawutf8 invariant suites green in
-the fast layer; a deliberately broken clamp (mutate the reference)
-turns them red (mutation check, as done for the scope-discipline CI
-audit in v1.2).</p>
+<p>v1.3 covered the pyobj list runtime. The typed backend now has three more hand-written runtime families with the same bug surface:</p>
+<ul><li><code>rawstr</code> (header <code>{len, cap, data}</code>): <code>rawstr_append</code> growth</li></ul>
+<p>monotone; <code>rawstr_slice</code> clamps match emission (I3/I4 analogues); <code>rawstr_at_*</code> bounds</p>
+<ul><li><code>rawdict</code> (entries + open-addressed index table): <code>rawdict_set</code></li></ul>
+<p>preserves "slot holds entry_index+1, 0 = empty, -1 = deleted"; reindex preserves membership; <code>rawdict_del</code> tombstone discipline</p>
+<ul><li><code>rawutf8</code> (cp_count/cp_offset): offset &lt; cp_count lands inside the</li></ul>
+<p>buffer; byte-length invariants</p>
+<p>Each is a new test class in <code>test_symbolic_invariants.py</code> following the v1.3 template: model header symbolically, execute the operation's reference semantics, discharge with Z3. The reference semantics are the exact expressions the emitters generate (<code>_emit_rawstr_core</code> and family), so a proof covers the emitted runtime.</p>
+<p><strong>Exit criterion:</strong> rawstr/rawdict/rawutf8 invariant suites green in the fast layer; a deliberately broken clamp (mutate the reference) turns them red (mutation check, as done for the scope-discipline CI audit in v1.2).</p>
 <h3>Phase 2 — <code>silu verify</code>: panic-free proofs for user programs (the user-visible feature)</h3>
-<p>The language's failure policy is abort-with-message on the checked
-operations: division by zero, subscript out of range, string index
-out of range. That makes "does it ever abort?" a precise, checkable
-property — and symbolic execution is the right tool for it.</p>
-<ul>
-<li>CLI: <code>silu verify program.si [--func name]</code></li>
-<li>For each function: symbolic arguments (respecting annotations —
-  annotated <code>int</code> gets an unconstrained i64, <code>str</code> a symbolic header),
-  path exploration, Z3 query "is any abort reachable?"</li>
-<li>Output: <code>ok — no abort reachable</code> / <code>possible abort: division by
-  zero at line N under [path condition]</code> — a counterexample path,
-  which is what sampling fuzzers cannot give</li>
-<li>Scope control: loops bounded (k-unrolling, as the loop analyzer
-  already does), unannotated/pyobj-heavy functions skipped with a note
-  (the pyobj heap is out of scope for soundness at first)</li>
-</ul>
-<p>This ships the subsystem as a differentiator: a small compiled
-language with push-button absence-of-crash proofs for the arithmetic
-and indexing core, in the same binary that compiles the program.</p>
-<p><strong>Exit criterion:</strong> verify passes on the 14 benchmark programs' pure
-functions (fib, spectral's inner loop, jsonparse's scanner over a
-symbolic next-byte model); each of the three abort sites has a
-positive test (a program where the abort IS reachable and the tool
-says so, with the witness).</p>
+<p>The language's failure policy is abort-with-message on the checked operations: division by zero, subscript out of range, string index out of range. That makes "does it ever abort?" a precise, checkable property — and symbolic execution is the right tool for it.</p>
+<ul><li>CLI: <code>silu verify program.si [--func name]</code></li><li>For each function: symbolic arguments (respecting annotations —</li></ul>
+<p>annotated <code>int</code> gets an unconstrained i64, <code>str</code> a symbolic header), path exploration, Z3 query "is any abort reachable?"</p>
+<ul><li>Output: <code>ok — no abort reachable</code> / `possible abort: division by</li></ul>
+<p>zero at line N under [path condition]` — a counterexample path, which is what sampling fuzzers cannot give</p>
+<ul><li>Scope control: loops bounded (k-unrolling, as the loop analyzer</li></ul>
+<p>already does), unannotated/pyobj-heavy functions skipped with a note (the pyobj heap is out of scope for soundness at first)</p>
+<p>This ships the subsystem as a differentiator: a small compiled language with push-button absence-of-crash proofs for the arithmetic and indexing core, in the same binary that compiles the program.</p>
+<p><strong>Exit criterion:</strong> verify passes on the 14 benchmark programs' pure functions (fib, spectral's inner loop, jsonparse's scanner over a symbolic next-byte model); each of the three abort sites has a positive test (a program where the abort IS reachable and the tool says so, with the witness).</p>
 <h3>Phase 3 — transform-equivalence proofs (DONE v1.15.2, tests/test_transform_equivalence.py)</h3>
-<p>Discharged 2026-10-28: T1 borrowed-str callee contract (reads
-indistinguishable from a copy; rebind += never mutates the caller)
-and T2 the rawlist writeback guard (length-preserved keeps element
-identity, growth replaces the pointer, branches mutually exclusive,
-post-call state equals the callee's final content). Obligation-
-discharge over Z3; the mutation check (guard removed) flips the
-suite red. The original plan text follows.</p>
+<p>Discharged 2026-10-28: T1 borrowed-str callee contract (reads indistinguishable from a copy; rebind += never mutates the caller) and T2 the rawlist writeback guard (length-preserved keeps element identity, growth replaces the pointer, branches mutually exclusive, post-call state equals the callee's final content). Obligation- discharge over Z3; the mutation check (guard removed) flips the suite red. The original plan text follows.</p>
 <h3>Phase 3 (original plan) — transform-equivalence proofs (hard, later)</h3>
-<p>The byte-identical gates prove build reproducibility, not semantic
-correctness of the optimizations themselves. The two transforms with
-real semantic content — borrowed-str parameter passing (v1.7.1) and
-the rawlist aliasing writeback guard (v1.8) — are defined by
-invariants ("a borrowed parameter is never freed by the callee", "a
-length-unchanged call keeps the caller's slot pointer"). Phase 3 is
-discharging those as symbolic obligations over the call protocol,
-the way Phase 1 does over the container headers.</p>
-<p>Deferred until Phases 1–2 have hardened the engine, because it needs
-interprocedural reasoning the current single-function explorer does
-not have.</p>
+<p>The byte-identical gates prove build reproducibility, not semantic correctness of the optimizations themselves. The two transforms with real semantic content — borrowed-str parameter passing (v1.7.1) and the rawlist aliasing writeback guard (v1.8) — are defined by invariants ("a borrowed parameter is never freed by the callee", "a length-unchanged call keeps the caller's slot pointer"). Phase 3 is discharging those as symbolic obligations over the call protocol, the way Phase 1 does over the container headers.</p>
+<p>Deferred until Phases 1–2 have hardened the engine, because it needs interprocedural reasoning the current single-function explorer does not have.</p>
 <h2>Maintenance policy until then</h2>
-<ul>
-<li>The subsystem stays in <code>silu/</code> (not archived), tests stay in the
-  fast layer</li>
-<li>New work lands test-first on the invariant template; no broad
-  refactors of the explorer until Phase 2 needs them</li>
-<li>Coverage target: raise <code>symbolic_executor.py</code> from 41% to at least
-  the levels Phase 1–2 exercise; measure again after Phase 1</li>
-</ul>
+<ul><li>The subsystem stays in <code>silu/</code> (not archived), tests stay in the</li></ul>
+<p>fast layer</p>
+<ul><li>New work lands test-first on the invariant template; no broad</li></ul>
+<p>refactors of the explorer until Phase 2 needs them</p>
+<ul><li>Coverage target: raise <code>symbolic_executor.py</code> from 41% to at least</li></ul>
+<p>the levels Phase 1–2 exercise; measure again after Phase 1</p>
 <h2>Non-goals</h2>
-<ul>
-<li>Full pyobj heap modeling (unsound to approximate; skipped, stated)</li>
-<li>Concurrency, floats beyond what Z3's FP theory handles cleanly</li>
-<li>Replacing the byte-identity gates — symbolic proofs complement
-  them, they do not subsume them</li>
-</ul>
+<ul><li>Full pyobj heap modeling (unsound to approximate; skipped, stated)</li><li>Concurrency, floats beyond what Z3's FP theory handles cleanly</li><li>Replacing the byte-identity gates — symbolic proofs complement</li></ul>
+<p>them, they do not subsume them</p>
 </div>
-<footer>
-  <div class="container">
-    <p>Silu — <a href="https://github.com/askender/silu-lang">GitHub</a> — <a href="./">Back to home</a></p>
-  </div>
-</footer>
+<footer><a href="https://github.com/askender/silu-lang">GitHub</a> · <a href="symbolic_roadmap_zh.html">中文版</a></footer>
 </body>
 </html>

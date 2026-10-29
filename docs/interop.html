@@ -8,55 +8,15 @@
 :root{--bg:#0d1117;--fg:#e6edf3;--accent:#58a6ff;--accent2:#3fb950;--dim:#8b949e;--card:#161b22;--border:#30363d}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
-.container{max-width:1100px;margin:0 auto;padding:0 2rem}
-.hero{text-align:center;padding:7rem 2rem 5rem;background:linear-gradient(180deg,#161b22 0%,#0d1117 100%)}
-.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:-.03em;margin-bottom:1rem}
-.hero h1 .accent{color:var(--accent)}
-.hero p.tagline{font-size:clamp(1.1rem,2.5vw,1.5rem);color:var(--dim);max-width:700px;margin:0 auto 2.5rem}
-.badges{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem}
-.badge{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;border-radius:9999px;border:1px solid var(--border);background:var(--card);font-size:.95rem;color:var(--fg);text-decoration:none;transition:border-color .2s}
-.badge:hover{border-color:var(--accent)}
-.badge .label{color:var(--dim);font-size:.8rem}
-.badge .value{font-weight:600;color:var(--accent)}
-.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
-.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
-.lang-switch a:hover{color:var(--fg)}
-.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
-section{padding:4rem 0}
-section h2{font-size:1.8rem;margin-bottom:2rem;letter-spacing:-.02em}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.8rem}
-.card h3{font-size:1.1rem;margin-bottom:.7rem;color:var(--accent)}
-.card p{color:var(--dim);font-size:.95rem}
-.code-block{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1.5rem;font-family:'SF Mono',Consolas,monospace;font-size:.85rem;overflow-x:auto;margin:1.5rem 0;line-height:1.7}
-.code-block .prompt{color:var(--dim)}
-.code-block .kw{color:#ff7b72}
-.code-block .str{color:#a5d6ff}
-.code-block .num{color:#d2a8ff}
-.code-block .fn{color:#d2a8ff}
-.code-block .ok{color:var(--accent2)}
-.code-block .err{color:#f85149}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.9rem}
-th{text-align:left;padding:.7rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
-td{padding:.6rem 1rem;border-bottom:1px solid var(--border)}
-td.speedup{font-weight:600;color:var(--accent2)}
-td.slower{color:#e3b341}
-.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin:2.5rem 0}
-.stat{text-align:center;padding:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:12px}
-.stat .num{font-size:2.2rem;font-weight:800;color:var(--accent)}
-.stat .label{font-size:.85rem;color:var(--dim);margin-top:.4rem}
-.feature{display:flex;gap:1.2rem;margin-bottom:1.8rem}
-.feature-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(88,166,255,.1);flex-shrink:0}
-.feature h3{margin-bottom:.4rem;font-size:1.05rem}
-.feature p{color:var(--dim);font-size:.92rem}
-footer{padding:3rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border)}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
-
+.lang-switch{position:fixed;top:1.2rem;right:1.2rem;display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100}
+.lang-switch a{padding:.45rem 1rem;font-size:.85rem;text-decoration:none;color:var(--dim);background:var(--card);transition:all .2s}
+.lang-switch a:hover{color:var(--fg);text-decoration:none}
+.lang-switch a.active{background:var(--accent);color:var(--bg);font-weight:600}
 .md-nav{position:fixed;top:1.2rem;left:1.2rem;display:flex;gap:.5rem;z-index:100;flex-wrap:wrap}
 .md-nav a{padding:.35rem .9rem;font-size:.8rem;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:6px;transition:all .2s}
-.md-nav a:hover{color:var(--fg);border-color:var(--accent)}
+.md-nav a:hover{color:var(--fg);border-color:var(--accent);text-decoration:none}
 .md-nav a.home{color:var(--accent);font-weight:600}
 .md-body{max-width:920px;margin:0 auto;padding:5.5rem 2rem 4rem}
 .md-body h1{font-size:2rem;margin-bottom:1.5rem;color:var(--accent);letter-spacing:-.02em}
@@ -71,149 +31,83 @@ a:hover{text-decoration:underline}
 .md-body th{text-align:left;padding:.6rem 1rem;border-bottom:2px solid var(--border);color:var(--dim);font-weight:600}
 .md-body td{padding:.5rem 1rem;border-bottom:1px solid var(--border)}
 .md-body blockquote{border-left:3px solid var(--accent);padding:.8rem 1.2rem;margin:1.2rem 0;color:var(--dim);background:rgba(88,166,255,.05);border-radius:0 8px 8px 0}
-.md-body a{color:var(--accent);text-decoration:none}
-.md-body a:hover{text-decoration:underline}
 .md-body strong{color:var(--accent2)}
 .md-body hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
 .md-body ul,.md-body ol{padding-left:1.5rem}
+footer{padding:2.5rem 2rem;text-align:center;color:var(--dim);font-size:.85rem;border-top:1px solid var(--border);margin-top:2rem}
+.md-nav a.active-page{color:var(--accent);border-color:var(--accent)}
 </style>
 </head>
 <body>
-<div class="md-nav"><a href="./" class="home">🏠 Home</a><a href="benchmarks.html">Benchmarks</a><a href="memory.html">Memory</a><a href="rfc_sum_types.html">Sum Types</a><a href="symbolic_roadmap.html">Symbolic</a><a href="interop.html">Interop</a></div>
+<div class="md-nav"><a href="./" class="home">🏠 Home</a><a href="benchmarks.html">Benchmarks</a><a href="memory.html">Memory</a><a href="rfc_sum_types.html">Sum Types RFC</a><a href="symbolic_roadmap.html">Symbolic Roadmap</a><a href="interop.html" class="active-page">C Interop</a></div>
 <div class="lang-switch">
-  <a href="./" class="active">EN</a>
-  <a href="zh.html">中文</a>
+  <a href="interop.html" class="active">EN</a>
+  <a href="interop_zh.html">中文</a>
 </div>
 <div class="md-body">
 <h1>C Interop &amp; the Self-Hosted Toolchain</h1>
-<p>Silu 互操作有两扇门：<strong>@export</strong>（Silu 函数变成 C 符号，被 C/Rust
-宿主链接调用）和 <strong>from c import</strong>（Silu 声明并调用外部 C 函数）。
-配合自举工具链 <code>siluc</code>（一行命令、零 Python），完整用法如下。</p>
-<h2>编译命令总览</h2>
-<div class="codehilite"><pre><span></span><code><span class="c1"># ① 自举管线（推荐）：siluc C 驱动 + siluc1 原生编译器 + clang</span>
-./siluc<span class="w"> </span>program.si<span class="w"> </span>-o<span class="w"> </span>program<span class="w">          </span><span class="c1"># 一行，零 Python，0.13s</span>
+<p>Silu interoperability has two doors: <strong>@export</strong> (Silu functions become C symbols, linked and called by C/Rust hosts) and <strong>from c import</strong> (Silu declares and calls external C functions). Together with the self-hosted toolchain <code>siluc</code> (one command, zero Python), the full usage follows.</p>
+<h2>Compilation Commands Overview</h2>
+<pre><code># ① Self-hosted pipeline (recommended): siluc C driver + siluc1 native compiler + clang
+./siluc program.si -o program          # One line, zero Python, 0.13s
 
-<span class="c1"># ② 产出可链接对象 + 自动生成 C 头文件</span>
-./siluc<span class="w"> </span>lib.si<span class="w"> </span>-o<span class="w"> </span>lib.o<span class="w"> </span>--object<span class="w">       </span><span class="c1"># 产出 lib.o + lib.o.h</span>
+# ② Emit a linkable object + auto-generated C header
+./siluc lib.si -o lib.o --object       # Produces lib.o + lib.o.h
 
-<span class="c1"># ③ Python 编译器（开发/调试用）</span>
-python<span class="w"> </span>-m<span class="w"> </span>silu<span class="w"> </span>build<span class="w"> </span>program.si<span class="w"> </span>-o<span class="w"> </span>program
+# ③ Python compiler (development/debugging)
+python -m silu build program.si -o program
 
-<span class="c1"># ④ 完全手动、零 Python 的底层管道（会全量编译运行时，慢）</span>
-./silu_fe<span class="w"> </span>&lt;<span class="w"> </span>program.si<span class="w"> </span><span class="p">|</span><span class="w"> </span>./silu_conv<span class="w"> </span>&gt;<span class="w"> </span>program.ll
-clang<span class="w"> </span>-O2<span class="w"> </span>program.ll<span class="w"> </span>-o<span class="w"> </span>program
-</code></pre></div>
+# ④ Fully manual, zero-Python low-level pipeline (compiles all runtime, slow)
+./silu_fe &lt; program.si | ./silu_conv &gt; program.ll
+clang -O2 program.ll -o program</code></pre>
+<p><code>siluc</code> and <code>siluc1</code> are automatically rebuilt by <code>python tools/selfhost_build.py</code> based on source mtime; first build takes ~25s, subsequent builds are reused. The runtime .o cache lives in <code>~/.cache/silu-runtime/driver/</code>, cold-cache one-time ~0.4s.</p>
+<h2>Direction 1: Silu → C Library (@export)</h2>
+<pre><code>@export
+def fibonacci(n: int) -&gt; int:
+    if n &lt; 2:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)</code></pre>
+<p>Compile and link:</p>
+<pre><code>./siluc fib.si -o fib.o --object       # fib.o + fib.o.h</code></pre>
+<p>The generated <code>fib.o.h</code>:</p>
+<pre><code>long long fibonacci(long long n);</code></pre>
+<p>Link from C:</p>
+<pre><code>#include "fib.o.h"
+#include &lt;stdio.h&gt;
 
-<p><code>siluc</code> 与 <code>siluc1</code> 由 <code>python tools/selfhost_build.py</code> 按源码
-mtime 自动重建；首次构建约 25s，之后复用。运行时 .o 缓存在
-<code>~/.cache/silu-runtime/driver/</code>，冷缓存一次性 ~0.4s。</p>
-<h2>方向 1：Silu → C 库（@export）</h2>
-<div class="codehilite"><pre><span></span><code><span class="c1"># lib.si</span>
-<span class="nd">@export</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">fib</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">n</span>
-    <span class="k">return</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+int main(void) {
+    printf("%lld\n", fibonacci(25));  // 75025
+    return 0;
+}</code></pre>
+<pre><code>clang -O2 main.c fib.o -o demo &amp;&amp; ./demo</code></pre>
+<h2>Direction 2: C Library → Silu (from c import)</h2>
+<pre><code>from c import sqrt, printf
 
-<span class="nd">@export</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">circle_area</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="k">return</span> <span class="mf">3.14159</span> <span class="o">*</span> <span class="n">r</span> <span class="o">*</span> <span class="n">r</span>
-</code></pre></div>
-
-<div class="codehilite"><pre><span></span><code>./siluc<span class="w"> </span>lib.si<span class="w"> </span>-o<span class="w"> </span>libfib.o<span class="w"> </span>--object<span class="w">   </span><span class="c1"># 产出 libfib.o 和 libfib.o.h</span>
-</code></pre></div>
-
-<p>生成的头文件（节选）：</p>
-<div class="codehilite"><pre><span></span><code><span class="cm">/* generated by siluc --object */</span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdint.h&gt;</span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdbool.h&gt;</span>
-<span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">tag</span><span class="p">;</span><span class="w"> </span><span class="kt">void</span><span class="o">*</span><span class="w"> </span><span class="n">data</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="n">PObj</span><span class="p">;</span>
-<span class="kt">int64_t</span><span class="w"> </span><span class="nf">fib</span><span class="p">(</span><span class="kt">int64_t</span><span class="p">);</span>
-<span class="kt">double</span><span class="w"> </span><span class="nf">circle_area</span><span class="p">(</span><span class="kt">double</span><span class="p">);</span>
-</code></pre></div>
-
-<p><strong>C 宿主</strong>：</p>
-<div class="codehilite"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;libfib.o.h&quot;</span>
-<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%lld</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="p">)</span><span class="n">fib</span><span class="p">(</span><span class="mi">24</span><span class="p">));</span><span class="w">   </span><span class="c1">// 46368</span>
-<span class="p">}</span>
-</code></pre></div>
-
-<div class="codehilite"><pre><span></span><code>clang<span class="w"> </span>-O2<span class="w"> </span>host.c<span class="w"> </span>libfib.o<span class="w"> </span>-o<span class="w"> </span>host<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./host
-</code></pre></div>
-
-<p><strong>Rust 宿主</strong>：</p>
-<div class="codehilite"><pre><span></span><code><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">os</span><span class="p">::</span><span class="n">raw</span><span class="p">::</span><span class="n">c_longlong</span><span class="p">;</span>
-<span class="k">extern</span><span class="w"> </span><span class="s">&quot;C&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">fib</span><span class="p">(</span><span class="n">n</span><span class="p">:</span><span class="w"> </span><span class="nc">c_longlong</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">c_longlong</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">fib</span><span class="p">(</span><span class="mi">24</span><span class="p">));</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
-</code></pre></div>
-
-<div class="codehilite"><pre><span></span><code>clang<span class="w"> </span>-shared<span class="w"> </span>libfib.o<span class="w"> </span>-o<span class="w"> </span>libfib.dylib
-rustc<span class="w"> </span>-C<span class="w"> </span>opt-level<span class="o">=</span><span class="m">3</span><span class="w"> </span>host.rs<span class="w"> </span>-o<span class="w"> </span>host<span class="w"> </span>-C<span class="w"> </span>link-arg<span class="o">=</span>-L/dir<span class="w"> </span>-C<span class="w"> </span>link-arg<span class="o">=</span>-lfib
-</code></pre></div>
-
-<p><strong>类型映射</strong>：<code>int ↔ int64_t</code>、<code>float ↔ double</code>、<code>bool ↔ bool</code>；
-静态标量签名天然就是 C 签名（LLVM 类型系统同构）。动态函数
-（含 pyobj 参数/返回）以 <code>PObj*</code> 稳定盒指针传递——C 侧按 tag
-读取（0=int 1=float 2=str 4=list 5=dict 6=instance 8=set）。
-<code>--object</code> 产物含全部运行时（自包含 .o，宿主无需额外依赖）。</p>
-<h2>方向 2：C → Silu（from c import）</h2>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">c</span><span class="w"> </span><span class="kn">import</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">floor</span><span class="p">,</span> <span class="nb">pow</span><span class="p">,</span> <span class="n">strlen</span>
-
-<span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>        <span class="c1"># 1.4142135623730951</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">floor</span><span class="p">(</span><span class="mf">3.7</span><span class="p">))</span>           <span class="c1"># 3.0</span>
-<span class="nb">print</span><span class="p">(</span><span class="nb">pow</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">))</span>       <span class="c1"># 1024.0</span>
-<span class="n">s</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;hello&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>            <span class="c1"># 5</span>
-</code></pre></div>
-
-<ul>
-<li>转换器按<strong>调用点参数类型</strong>发射 declare（float 参数 → double
-  签名）；与运行时已有声明同名时自动复用。</li>
-<li><code>str</code> 参数以 <code>const char*</code> 传递（NUL 终止拷贝；C 侧不得释放）。</li>
-<li>解释器平面自动绑定 ctypes 精确 libc 签名，CPython 平面（pycompat）
-  提供 <code>c</code> 模块——同一源码四平面一致。</li>
-<li><strong>动态值不跨边界</strong>（编译期明确报错）：extern 是静态世界的大门。</li>
-</ul>
-<h2>已验证矩阵</h2>
+def hypotenuse(a: float, b: float) -&gt; float:
+    return sqrt(a * a + b * b)</code></pre>
+<p>The compiler emits <code>declare</code> statements for the external C functions, matching the argument kinds at each call site. The function signature is inferred from how Silu uses it — no separate header file needed.</p>
+<p>Link with the C library:</p>
+<pre><code>./siluc math_demo.si -o math_demo -lm</code></pre>
+<h2>The siluc Toolchain</h2>
+<pre><code>source (.si) → siluc1 (front end + converter, written in Silu) → .ll → clang -flto → native binary</code></pre>
 <table>
-<thead>
-<tr>
-<th>场景</th>
-<th>验证</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>C 宿主链接 .o 调 fib/circle_area/safe_mul</td>
-<td>✓（tests/test_c_abi.py）</td>
-</tr>
-<tr>
-<td>Rust 宿主 extern "C" 调 fib（dylib）</td>
-<td>✓</td>
-</tr>
-<tr>
-<td>from c import sqrt/floor/pow 四平面</td>
-<td>✓（解释器/编译/CPython/parity）</td>
-</tr>
-<tr>
-<td>strlen 字符串跨边界</td>
-<td>✓</td>
-</tr>
-<tr>
-<td>动态参数拒绝</td>
-<td>✓（编译期报错）</td>
-</tr>
-</tbody>
-</table>
-<p>限制：@export 目前作用于静态标量函数（pyobj 函数可导出但 C 侧
-需按 PObj 协议操作）；extern 无结构体/指针参数支持（按需扩展）。</p>
+<thead><tr>
+<th>Component</th>
+<th>Language</th>
+<th>Role</th>
+</tr></thead><tbody>
+<tr><td><code>siluc</code></td><td>C (~400 lines)</td><td>File-in binary-out driver; spawns siluc1, splits output, invokes clang</td></tr>
+<tr><td><code>siluc1</code></td><td>Silu</td><td>The monolithic compiler: lexer, parser, IR generator, LLVM code generator</td></tr>
+<tr><td>runtime</td><td>compiled .o</td><td>Cached C runtime (178 functions, rebuilt on source change)</td></tr>
+</tbody></table>
+<h3>Self-hosting proof</h3>
+<p>The fixed-point test (in the test suite) proves the self-hosted compiler reproduces its own build output byte-for-byte:</p>
+<ol><li>The Silu-written converter compiles its own source</li><li>The output .ll must be identical to the .ll used to build it</li><li>This runs on every commit — any divergence fails the build</li></ol>
+<h3>Bootstrap command</h3>
+<pre><code>pip install pysilu
+silu bootstrap    # One-time build: siluc1 (~25s) + siluc C driver</code></pre>
+<p>After bootstrap, the pipeline contains zero Python: <code>./siluc file.si -o program</code> completes in 0.11 seconds.</p>
 </div>
-<footer>
-  <div class="container">
-    <p>Silu — <a href="https://github.com/askender/silu-lang">GitHub</a> — <a href="./">Back to home</a></p>
-  </div>
-</footer>
+<footer><a href="https://github.com/askender/silu-lang">GitHub</a> · <a href="interop_zh.html">中文版</a></footer>
 </body>
 </html>
