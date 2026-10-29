@@ -59,8 +59,8 @@ python -m silu build program.si -o program
 
 # ④ Fully manual, zero-Python low-level pipeline (compiles all runtime, slow)
 ./silu_fe &lt; program.si | ./silu_conv &gt; program.ll
-clang -O2 program.ll -o program</code></pre>
-<p><code>siluc</code> and <code>siluc1</code> are automatically rebuilt by <code>python tools/selfhost_build.py</code> based on source mtime; first build takes ~25s, subsequent builds are reused. The runtime .o cache lives in <code>~/.cache/silu-runtime/driver/</code>, cold-cache one-time ~0.4s.</p>
+clang -O2 program.ll -lm -o program</code></pre>
+<p>Released archives contain prebuilt <code>siluc</code> and <code>siluc1</code>; keep them in the same directory. The runtime .o cache lives in <code>$XDG_CACHE_HOME/silu-runtime/driver/</code> (or <code>~/.cache/silu-runtime/driver/</code>); the first cold-cache build takes ~0.4s.</p>
 <h2>Direction 1: Silu → C Library (@export)</h2>
 <pre><code>@export
 def fibonacci(n: int) -&gt; int:
@@ -70,7 +70,7 @@ def fibonacci(n: int) -&gt; int:
 <p>Compile and link:</p>
 <pre><code>./siluc fib.si -o fib.o --object       # fib.o + fib.o.h</code></pre>
 <p>The generated <code>fib.o.h</code>:</p>
-<pre><code>long long fibonacci(long long n);</code></pre>
+<pre><code>int64_t fibonacci(int64_t n);</code></pre>
 <p>Link from C:</p>
 <pre><code>#include "fib.o.h"
 #include &lt;stdio.h&gt;
@@ -79,7 +79,7 @@ int main(void) {
     printf("%lld\n", fibonacci(25));  // 75025
     return 0;
 }</code></pre>
-<pre><code>clang -O2 main.c fib.o -o demo &amp;&amp; ./demo</code></pre>
+<pre><code>clang -O2 main.c fib.o -lm -o demo &amp;&amp; ./demo</code></pre>
 <h2>Direction 2: C Library → Silu (from c import)</h2>
 <pre><code>from c import sqrt, printf
 
@@ -87,7 +87,7 @@ def hypotenuse(a: float, b: float) -&gt; float:
     return sqrt(a * a + b * b)</code></pre>
 <p>The compiler emits <code>declare</code> statements for the external C functions, matching the argument kinds at each call site. The function signature is inferred from how Silu uses it — no separate header file needed.</p>
 <p>Link with the C library:</p>
-<pre><code>./siluc math_demo.si -o math_demo -lm</code></pre>
+<pre><code>./siluc math_demo.si -o math_demo  # siluc links libm</code></pre>
 <h2>The siluc Toolchain</h2>
 <pre><code>source (.si) → siluc1 (front end + converter, written in Silu) → .ll → clang -flto → native binary</code></pre>
 <table>

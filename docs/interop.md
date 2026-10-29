@@ -19,13 +19,13 @@ python -m silu build program.si -o program
 
 # ④ Fully manual, zero-Python low-level pipeline (compiles all runtime, slow)
 ./silu_fe < program.si | ./silu_conv > program.ll
-clang -O2 program.ll -o program
+clang -O2 program.ll -lm -o program
 ```
 
-`siluc` and `siluc1` are automatically rebuilt by
-`python tools/selfhost_build.py` based on source mtime; first build
-takes ~25s, subsequent builds are reused. The runtime .o cache lives in
-`~/.cache/silu-runtime/driver/`, cold-cache one-time ~0.4s.
+Released archives contain prebuilt `siluc` and `siluc1`; keep them in
+the same directory. The runtime .o cache lives in
+`$XDG_CACHE_HOME/silu-runtime/driver/` (or
+`~/.cache/silu-runtime/driver/`); the first cold-cache build takes ~0.4s.
 
 ## Direction 1: Silu → C Library (@export)
 
@@ -46,7 +46,7 @@ Compile and link:
 The generated `fib.o.h`:
 
 ```c
-long long fibonacci(long long n);
+int64_t fibonacci(int64_t n);
 ```
 
 Link from C:
@@ -62,7 +62,7 @@ int main(void) {
 ```
 
 ```bash
-clang -O2 main.c fib.o -o demo && ./demo
+clang -O2 main.c fib.o -lm -o demo && ./demo
 ```
 
 ## Direction 2: C Library → Silu (from c import)
@@ -81,7 +81,7 @@ is inferred from how Silu uses it — no separate header file needed.
 Link with the C library:
 
 ```bash
-./siluc math_demo.si -o math_demo -lm
+./siluc math_demo.si -o math_demo  # siluc links libm
 ```
 
 ## The siluc Toolchain

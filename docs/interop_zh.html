@@ -59,8 +59,8 @@ python -m silu build program.si -o program
 
 # ④ 完全手动、零 Python 的底层管道（会全量编译运行时，慢）
 ./silu_fe &lt; program.si | ./silu_conv &gt; program.ll
-clang -O2 program.ll -o program</code></pre>
-<p><code>siluc</code> 与 <code>siluc1</code> 由 <code>python tools/selfhost_build.py</code> 按源码 mtime 自动重建；首次构建约 25s，之后复用。运行时 .o 缓存在 <code>~/.cache/silu-runtime/driver/</code>，冷缓存一次性 ~0.4s。</p>
+clang -O2 program.ll -lm -o program</code></pre>
+<p>发布压缩包已包含 <code>siluc</code> 与 <code>siluc1</code>，请保持两者位于同一目录。 运行时 .o 缓存在 <code>$XDG_CACHE_HOME/silu-runtime/driver/</code>（未设置时为 <code>~/.cache/silu-runtime/driver/</code>），冷缓存一次性 ~0.4s。</p>
 <h2>方向 1：Silu → C 库（@export）</h2>
 <pre><code># lib.si
 @export
@@ -86,13 +86,13 @@ double circle_area(double);</code></pre>
 int main(void) {
     printf("%lld\n", (long long)fib(24));   // 46368
 }</code></pre>
-<pre><code>clang -O2 host.c libfib.o -o host &amp;&amp; ./host</code></pre>
+<pre><code>clang -O2 host.c libfib.o -lm -o host &amp;&amp; ./host</code></pre>
 <p><strong>Rust 宿主</strong>：</p>
 <pre><code>use std::os::raw::c_longlong;
 extern "C" { fn fib(n: c_longlong) -&gt; c_longlong; }
 fn main() { unsafe { println!("{}", fib(24)); } }</code></pre>
-<pre><code>clang -shared libfib.o -o libfib.dylib
-rustc -C opt-level=3 host.rs -o host -C link-arg=-L/dir -C link-arg=-lfib</code></pre>
+<pre><code>clang -shared libfib.o -lm -o libfib.dylib
+rustc -C opt-level=3 host.rs -o host -C link-arg=-L/dir -C link-arg=-lfib -C link-arg=-lm</code></pre>
 <p><strong>类型映射</strong>：<code>int ↔ int64_t</code>、<code>float ↔ double</code>、<code>bool ↔ bool</code>； 静态标量签名天然就是 C 签名（LLVM 类型系统同构）。动态函数 （含 pyobj 参数/返回）以 <code>PObj*</code> 稳定盒指针传递——C 侧按 tag 读取（0=int 1=float 2=str 4=list 5=dict 6=instance 8=set）。 <code>--object</code> 产物含全部运行时（自包含 .o，宿主无需额外依赖）。</p>
 <h2>方向 2：C → Silu（from c import）</h2>
 <pre><code>from c import sqrt, floor, pow, strlen
