@@ -4,6 +4,17 @@ All notable changes, organized by version tag.
 
 ## v1.x — Self-Hosting Campaign (2026-10-16 → present)
 
+### v1.16.2
+Memory-leak fix and full self-hosting CI
+
+- fixed a leak that made compiling very large single files need >15GB
+  of memory (a leaked whole-source copy per field-slice assignment);
+  the self-hosted front end now parses its own ~12k-line converter in
+  about 1GB
+- all four platform binaries rebuilt; the complete self-hosting gates
+  (byte-identity fixed points, frontend parity corpus, driver parity)
+  run in CI again
+
 ### v1.16.1
 First public native toolchain release
 
