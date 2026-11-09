@@ -4,6 +4,46 @@ All notable changes, organized by version tag.
 
 ## v1.x — Self-Hosting Campaign (2026-10-16 → present)
 
+### v1.18.1
+code-point correct dynamic strings, non-ASCII at full speed
+
+- string offsets gain a content-validated codepoint->byte side cache:
+  per-character loops over non-ASCII strings drop from O(n^2) to O(n)
+  - a 50K-code-point loop went from minutes to ~0.3s
+- the dynamic layer now matches CPython code-point semantics: len()
+  counts code points, s[i] bounds-checks and copies a whole UTF-8
+  sequence, s[a:b:c] clamps and steps in code points
+- semicolons are rejected by all three front ends
+
+### v1.18.0
+strbuf: an explicit, reference-semantics growable buffer
+
+- fills the measured hole where the same-concatenation spelling
+  through an instance field or function boundary degraded ~1100x
+  (34.9s vs 0.03s for 3M pushes); with a buffer it is 0.07s in any
+  context
+- API: strbuf() / strbuf(x) (the ctor copies), push(s) O(1)
+  amortized anywhere, to_str() snapshots an immutable str, len(b)
+  counts code points; sharing is pointer-level like list/dict
+- str semantics untouched - the .ll gate stayed byte-identical on
+  all pre-existing corpora; self-host sources deliberately not
+  migrated (a census shows no field/cross-function hot loop to fix)
+
+### v1.17.0
+string globals content-addressed and interned; boolean singletons
+
+- string global names switch from a running counter (any declaration
+  reorder shifted every later name) to content-derived names, then
+  constant interning collapses duplicates: silu_fe's output drops
+  1,137 redundant constants (~51.5KB); output diffs and incremental
+  compilation stop renumbering unrelated strings
+- interning exposed a latent bug in both runtime/user split
+  synthesizers (constant-typed globals were never declared
+  external); regression tests added on both sides
+- booleans become two immortal singleton boxes: create_bool is a
+  bare select (zero allocations) and `x is True/False` a single
+  pointer compare
+
 ### v1.16.2
 Memory-leak fix and full self-hosting CI
 
