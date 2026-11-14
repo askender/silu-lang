@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Silu Playground — the self-hosted compiler, compiled to WebAssembly</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, system-ui, sans-serif;
+    background: #101418; color: #d8dee6;
+  }
+  header { padding: 14px 20px; border-bottom: 1px solid #232a32; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header p { margin: 4px 0 0; font-size: 13px; color: #8b96a5; }
+  header a { color: #6cb2ff; text-decoration: none; }
+  main {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    padding: 12px 20px; height: calc(100vh - 92px);
+  }
+  .pane { display: flex; flex-direction: column; min-height: 0; }
+  .pane h2 { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: #8b96a5; text-transform: uppercase; letter-spacing: .05em; }
+  textarea, pre {
+    flex: 1; width: 100%; margin: 0; padding: 12px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.45;
+    background: #0b0e12; color: #d8dee6; border: 1px solid #232a32;
+    border-radius: 8px; resize: none; overflow: auto; white-space: pre;
+  }
+  textarea:focus { outline: 1px solid #3b82f6; }
+  #bar { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  button {
+    font: inherit; font-weight: 600; padding: 6px 16px; border: 0;
+    border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer;
+  }
+  button.alt { background: #0e7c66; }
+  button.alt2 { background: #7c5c0e; }
+  #dl { color: #6cb2ff; font-size: 12px; font-family: var(--mono); }
+  button:disabled { opacity: .5; cursor: default; }
+  select {
+    font: inherit; padding: 5px 8px; border-radius: 6px;
+    background: #1a2129; color: #d8dee6; border: 1px solid #232a32;
+  }
+  #stats { font-size: 12px; color: #8b96a5; font-family: var(--mono); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; height: auto; }
+    textarea, pre { min-height: 300px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Silu Playground</h1>
+  <p>The self-hosted Silu compiler, compiled to WebAssembly, runs entirely
+  in your tab — the .ll is byte-identical to what the native compiler
+  prints, and the Run pipeline interprets the same IR the native tools
+  see. No server. Docs: <a href="https://silu.askender.xyz/">silu.askender.xyz</a></p>
+</header>
+<main>
+  <div class="pane">
+    <div id="bar">
+      <button id="go">Compile → .ll</button>
+      <button id="run" class="alt">Run ▶</button>
+      <button id="wasmc" class="alt2">Compile → .wasm</button>
+      <a id="dl" download="program.wasm" style="display:none">⬇ .wasm</a>
+      <select id="examples"></select>
+      <span id="stats">loading modules…</span>
+    </div>
+    <h2>silu source</h2>
+    <textarea id="src" spellcheck="false"></textarea>
+  </div>
+  <div class="pane">
+    <h2 id="outTitle">llvm ir (byte-identical to native output)</h2>
+    <pre id="out"># press Compile or Run</pre>
+  </div>
+</main>
+<script type="module">
+const EXAMPLES = {
+  "recursion.si": "wasm/examples/recursion.si",
+  "loops.si": "wasm/examples/loops.si",
+  "and_or_nary.si": "wasm/examples/and_or_nary.si",
+  "aug_sub.si": "wasm/examples/aug_sub.si",
+  "bool_ops.si": "wasm/examples/bool_ops.si",
+  "dicts.si": "wasm/examples/dicts.si",
+  "dicts_f.si": "wasm/examples/dicts_f.si",
+  "dsbig.si": "wasm/examples/dsbig.si",
+  "edge.si": "wasm/examples/edge.si",
+  "float_ops.si": "wasm/examples/float_ops.si",
+  "floats.si": "wasm/examples/floats.si",
+  "globals.si": "wasm/examples/globals.si",
+  "lists.si": "wasm/examples/lists.si",
+  "nested_fn.si": "wasm/examples/nested_fn.si",
+  "record_sem.si": "wasm/examples/record_sem.si",
+  "stdin_demo.si": "wasm/examples/stdin_demo.si",
+  "strbuf_sem.si": "wasm/examples/strbuf_sem.si",
+  "strings.si": "wasm/examples/strings.si",
+  "containers.si (compile-only)": "containers.si (compile-only)",
+};
+const EXAMPLE_TEXT = {
+  "recursion.si": `# recursion + int arithmetic + if/else chains
+def fib(n: int) -> int:
+    if n < 2:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+def gcd(a: int, b: int) -> int:
+    while b != 0:
+        t: int = b
+        b = a % b
+        a = t
+    return a
+
+print(fib(20))
+print(gcd(1071, 462))
+print(7 // 2, -7 // 2, 7 % 3, -7 % 3)
+print(2 ** 40)`,
+  "loops.si": `# while loops, counters, augmented assignment, nested control flow
+i: int = 0
+total: int = 0
+while i < 10:
+    total += i * i
+    i += 1
+print(total)
+
+# collatz(27) - the famous long flight
+n: int = 27
+steps: int = 0
+while n != 1:
+    if n % 2 == 0:
+        n //= 2
+    else:
+        n = 3 * n + 1
+    steps += 1
+print(steps)
+
+d: int = 1
+c: int = 0
+while d <= 4096:
+    d *= 2
+    c += 1
+print(d, c)
+
+def digits_sum(n: int) -> int:
+    s: int = 0
+    while n > 0:
+        s += n % 10
+        n //= 10
+    return s
+
+print(digits_sum(2 ** 30))`,
+  "and_or_nary.si": `# n-ary and/or chains (the FE emits FLAT operand lists) + short-circuit
+# side effects. The old two-operand emission silently dropped the third
+# operand - this example pins the fix. Int-valued and/or results are a
+# documented subset gap, so conditions are only used for truthiness.
+ok = 0
+i = 0
+while i < 6:
+    if i > 0 and i < 5 and i % 2 == 1:
+        ok += 1
+    i += 1
+print(ok)
+
+hit = 0
+j = 0
+while j < 6:
+    if j == 1 or j == 3 or j == 9:
+        hit += 1
+    j += 1
+print(hit)
+
+def side(v: int) -> int:
+    acc[0] += v
+    return v
+
+acc = [0]
+r = 0
+if side(0) and side(1) and side(2):
+    r = 1
+print(r, acc)
+
+if side(5) or side(6) or side(7):
+    r = 2
+print(r, acc)
+
+if side(0) or side(0):
+    r = 3
+print(r, acc)
+
+mixed = 0
+k = 4
+if k > 0 and k < 10 or k == 99:
+    mixed = 1
+print(mixed)`,
+  "aug_sub.si": `# subscript aug-assign on lists and dicts; print rendering
+l: list[int] = []
+l.append(5)
+l.append(9)
+l[0] += 1
+l[1] *= 3
+print(l)
+
+d: dict[str, int] = {}
+d["a"] = 1
+d["a"] += 2
+d["b"] = 10
+d["b"] -= 3
+print(d)
+
+total: int = 0
+for k in d:
+    total += d[k]
+print(total)
+
+m: dict[str, int] = {}
+m["x"] = 2
+m["x"] = m["x"] * 8
+print(m["x"])`,
+  "bool_ops.si": `# boolean operators (short-circuit), break/continue, nested loops
+n: int = 27
+steps: int = 0
+while n != 1 and steps < 40:
+    if n % 2 == 0:
+        n = n // 2
+    else:
+        n = 3 * n + 1
+    steps += 1
+print(n, steps)
+
+a: int = 5
+b: int = 3
+score: int = 0
+if a > 4 and b > 2:
+    score += 1
+if a > 100 or b > 2:
+    score += 10
+if not (a < b):
+    score += 100
+if a < 0 and b < 0:
+    score += 1000
+print(score)
+
+total: int = 0
+i: int = 0
+while i < 20:
+    i += 1
+    if i % 3 != 0:
+        continue
+    if i > 15:
+        break
+    total += i
+print(total)
+
+grid: int = 0
+r: int = 0
+while r < 4:
+    c: int = 0
+    while True:
+        if c == 3:
+            break
+        grid += 1
+        c += 1
+    r += 1
+print(grid)`,
+  "dicts.si": `# dict[str, int]: set, get, len, for-in keys, membership
+d: dict[str, int] = {}
+d["a"] = 1
+d["b"] = 2
+print(d["a"])
+print(d["b"])
+print(len(d))
+total: int = 0
+for k in d:
+    total += d[k]
+print(total)
+if "a" in d:
+    print(1)
+d["a"] = 10
+print(d["a"])`,
+  "dicts_f.si": `# dict values: float (bit-packed) and str (pointer); rendering vs CPython
+temps: dict[str, float] = {}
+temps["mon"] = 21.5
+temps["tue"] = 3.25
+print(temps)
+print(temps["mon"] + temps["tue"])
+caps: dict[str, str] = {}
+caps["fr"] = "Paris"
+caps["jp"] = "Tokyo"
+print(caps)
+print(caps["jp"] + "!")
+print(len(caps))
+if "fr" in caps:
+    print(1)
+n: int = 0
+for k in temps:
+    n += 1
+print(n)`,
+  "dsbig.si": `# dict growth: 12 keys force table resize (8 -> 16), update + order
+big: dict[str, int] = {}
+n: int = 0
+while n < 12:
+    big["k" + str(n)] = n * n
+    n += 1
+big["k3"] = 999
+big["k0"] = 42
+print(big)
+print(big["k3"])
+print(big["k0"])
+print(len(big))
+if "k11" in big:
+    print(big["k11"])`,
+  "edge.si": `# bool repr, negative indices, mixed-type edges
+t: bool = True
+print(t)
+f: bool = False
+print(f)
+print(1 < 2)
+print(2 < 1)
+b: bool = 1 < 2 and 2 < 3
+print(b)
+print(not (1 < 2))
+print((1 < 2) + 1)
+
+l: list[int] = []
+l.append(5)
+l.append(9)
+print(l[-1])
+print(l[-2])
+l[-1] = 100
+print(l)
+
+s: str = "hello"
+print(s[-1])
+d: dict[str, int] = {}
+d["k"] = 7
+print(len(d))`,
+  "float_ops.si": `# float comparisons, float ** (host pow), str of float, floor semantics
+def clamp(q: float) -> float:
+    if q > 10.0:
+        return 10.0
+    if q < 0.5:
+        return 0.5
+    return q
+
+print(clamp(3.25))
+print(clamp(99.5))
+print(clamp(0.1))
+
+acc: float = 1.0
+while acc < 100.0:
+    acc = acc * 2.5
+print(acc)
+
+p: float = 2.0 ** 10.0
+print(p)
+print(9.0 ** 0.5)
+
+x: float = 2.5
+y: float = 1.25
+if x > y and y > 0.5:
+    print(x - y)
+
+f: float = 7.5
+g: float = 2.0
+print(f / g)
+print(f // g)
+print(f % g)
+s: str = str(f)
+print(s + "!")
+print(len(str(p)))`,
+  "floats.si": `# float arithmetic: promotion, true division, CPython repr printing
+acc: float = 0.0
+i: int = 0
+while i < 10:
+    acc = acc + i / 4.0
+    i += 1
+print(acc)
+print(7 / 2)
+print(1.0 / 3.0)
+print(3.5 * 2.0)
+print(100.0)
+print(-2.5)
+
+def area(r: float) -> float:
+    return 3.14159 * r * r
+
+print(area(2.0))
+print(float(7))`,
+  "globals.si": `# module-level variables: functions READ them (global.get); writes
+# happen at the top level only (function-scope writes are locals)
+counter: int = 0
+scale: float = 2.5
+label: str = "v"
+
+def bump(by: int) -> int:
+    return counter + by
+
+print(bump(3))
+counter = 100
+print(bump(4))
+print(scale * 2.0)
+print(label + "1")
+
+xs: list[int] = []
+xs.append(7)
+def first() -> int:
+    return xs[0]
+print(first())
+xs[0] = 9
+print(first())`,
+  "lists.si": `# list[int]: append, subscript, len, for-in iteration
+l: list[int] = []
+l.append(5)
+l.append(9)
+print(l[0] + l[1])
+print(len(l))
+total: int = 0
+for x in l:
+    total += x
+print(total)
+
+squares: list[int] = []
+i: int = 0
+while i < 6:
+    squares.append(i * i)
+    i += 1
+print(squares)`,
+  "nested_fn.si": `# Capture-free nested functions (hoisted to module scope as
+# outer__name). True closures are out of scope by design - the FE hoist
+# pass rejects captures loudly ("pass it as a parameter"). This pins the
+# supported shape end to end: nested defs calling module functions and
+# module globals, double nesting, forward references at module level,
+# recursion inside a nested def.
+BASE: int = 100
+
+
+def mod_helper(v: int) -> int:
+    return v + 1
+
+
+def outer(n: int) -> int:
+    def inner(x: int) -> int:
+        return mod_helper(x) + BASE
+    total: int = 0
+    k: int = 0
+    while k < n:
+        total += inner(k)
+        k += 1
+    return total
+
+
+def deep(n: int) -> int:
+    def mid(a: int) -> int:
+        def leaf(b: int) -> int:
+            return b * b
+        return leaf(a) + leaf(a + 1)
+    return mid(n)
+
+
+def later(n: int) -> int:
+    return fwd(n) + n
+
+
+def fwd(v: int) -> int:
+    return v * 10
+
+
+def fibm(n: int) -> int:
+    def helper(a: int, b: int, steps: int) -> int:
+        if steps == 0:
+            return a
+        return helper(b, a + b, steps - 1)
+    return helper(0, 1, n)
+
+
+def pick_outer(flag: bool) -> int:
+    def pick_pos(v: int) -> int:
+        if v < 0:
+            return 0 - v
+        return v
+    if flag:
+        return pick_pos(0 - 7)
+    return pick_pos(9)
+
+
+print(outer(4))
+print(fibm(10))
+print(deep(3), later(4), pick_outer(True), pick_outer(False))`,
+  "record_sem.si": `# flat record classes (subset 5a): constructor, match narrowing with
+# field capture, wildcard case, records through dynamic containers.
+# The record owns its str fields (bind-copy rule); narrowing extracts
+# owned copies into the bound names.
+class JInt:
+    v: int
+
+class JStr:
+    v: str
+
+class Pair:
+    a: int
+    b: str
+
+p = JInt(42)
+match p:
+    case JInt(v=n):
+        print(n, n + 1)
+
+q = Pair(7, "hi")
+match q:
+    case Pair(a=a, b=b):
+        print(a, b, len(b))
+
+# records flow through dynamic containers as opaque pointers
+l = [JInt(1), JInt(2)]
+match l[1]:
+    case JInt(v=n):
+        print(n)
+
+d = {}
+d["x"] = JStr("abc")
+match d["x"]:
+    case JStr(v=w):
+        print(w, len(w))
+
+# non-matching case falls through to the wildcard
+match l[0]:
+    case JStr(v=w):
+        print(w)
+    case _:
+        print("no")
+
+# first match wins (JInt before wildcard)
+match q:
+    case Pair(a=a, b=b):
+        print("pair", a)
+    case _:
+        print("other")
+
+# str fields are owned by the record: extending a captured copy must
+# not touch the stored field
+match d["x"]:
+    case JStr(v=w):
+        w = w + "!"
+        print(w)
+
+match d["x"]:
+    case JStr(v=w):
+        print(w)
+
+# constructor through a function returning a record
+def mk(k: int):
+    return JInt(k * 2)
+match mk(21):
+    case JInt(v=n):
+        print(n)`,
+  "stdin_demo.si": `# stdin pipeline: the gate feeds examples/stdin_demo.stdin to BOTH the
+# wasm program (runWasm stdin) and CPython (same bytes); outputs must
+# match byte for byte. Exercises the input() builtin end to end.
+line: str = input()
+print("got:" + line, len(line))
+second: str = input()
+print(second + "!")`,
+  "strbuf_sem.si": `# str ABI semantics: value-semantics bindings (every str bind owns its
+# buffer) + the narrow-window in-place extend (x = x + e, x += e).
+# Aliases must never observe an extend; concat results are fresh.
+s: str = "abc"
+t: str = s
+s = s + "d"
+print(t, s)
+s += "e"
+print(s, len(s))
+u = s + s
+print(u)
+# dict values are owned copies: extending the source leaves them alone
+d: dict[str, str] = {}
+v: str = "hello"
+d["k"] = v
+v = v + "!"
+print(v, d["k"])
+x = d["k"] + "?"
+print(d["k"], x)
+# dict keys are owned copies too
+d2: dict[str, int] = {}
+w: str = "aa"
+d2[w] = 1
+w += "b"
+print(d2["aa"], w)
+# append loop: the window stays at the heap top, amortized O(1)
+big: str = ""
+i: int = 0
+while i < 200:
+    big = big + "xy"
+    i += 1
+print(len(big), big[397:400], big[-1], big[0])
+# non-ASCII window: clen must stay correct through extends
+c: str = "中"
+c = c + "文"
+c += "字"
+print(c, len(c), c[1], c[-1])
+# global str aug (top-level += is the window on a wasm global)
+gs: str = "G"
+gs += "H"
+print(gs)
+# param extend: args are owned copies, caller's value unaffected
+def poke(sv: str) -> str:
+    sv += "-p"
+    return sv
+q: str = "qq"
+print(poke(q), q)
+# for-dict key binding copies: body extends must not touch the dict
+for kk in d2:
+    kk += "z"
+    print(kk)
+print(d2["aa"], "aa" in d2)
+# str(int) / str(float) concat: real objects with prefixes now
+msg = "n=" + str(42) + " f=" + str(2.5)
+print(msg, len(msg))`,
+  "strings.si": `# str: literals, concat, codepoint len, comparison, index, slice
+s: str = "abcd"
+print(s[0])
+print(s[3])
+print(s[1:3])
+print(s[:2])
+print(s[2:])
+print(s[-1])
+print(s[-2:])
+print(s[::-1])
+print(len(s[1:3]))
+u: str = "中文测试"
+print(u[1])
+print(u[1:3])
+print(len(u))
+t: str = s + "!"
+print(t)
+if s == "abcd":
+    print(1)
+if s < "z":
+    print(2)
+n: int = 42
+print(str(n))
+print(s.upper())
+print(t.lower())`,
+  "containers.si (compile-only)": `# list + dict: build, index, iterate, membership
+# NOTE(backend gap): l[-1] negative list indexing is NOT implemented in
+# the wasm backend (li_get traps out-of-range). Compile-only reference.
+l: list[int] = []
+i: int = 0
+while i < 8:
+    l.append(i * i)
+    i += 1
+print(l)
+print(l[3], l[-1], len(l))
+total: int = 0
+for x in l:
+    total += x
+print(total)
+
+d: dict[str, int] = {}
+d["a"] = 1
+d["b"] = 2
+d["a"] = d["a"] + 10
+print(d["a"], d["b"], len(d))
+print("a" in d, "z" in d)
+for k in d:
+    print(k, d[k])`,
+};
+
+const src = document.getElementById("src");
+const out = document.getElementById("out");
+const outTitle = document.getElementById("outTitle");
+const go = document.getElementById("go");
+const run = document.getElementById("run");
+const wasmc = document.getElementById("wasmc");
+const dl = document.getElementById("dl");
+const stats = document.getElementById("stats");
+src.addEventListener("input", () => {
+  wasmBytes2 = null;
+  run.textContent = "Run ▶";
+});
+const sel = document.getElementById("examples");
+src.value = EXAMPLE_TEXT["recursion.si"];
+for (const k of Object.keys(EXAMPLES)) {
+  const o = document.createElement("option");
+  o.textContent = k;
+  sel.appendChild(o);
+}
+sel.addEventListener("change", () => {
+  const k = sel.value;
+  if (EXAMPLE_TEXT[k]) {
+    src.value = EXAMPLE_TEXT[k];
+  } else {
+    fetch(EXAMPLES[k]).then((r) => r.text()).then((t) => (src.value = t));
+  }
+});
+
+// boot without top-level await: register handlers first, then load
+let core = null;
+let modules = {}; // name -> Uint8Array
+let readyPromise = null;
+
+async function loadOne(name) {
+  const resp = await fetch("./" + name + ".wasm");
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${name}.wasm`);
+  modules[name] = new Uint8Array(await resp.arrayBuffer());
+}
+
+async function boot() {
+  core = await import("./host_core.mjs");
+  await Promise.all([loadOne("fe"), loadOne("interp"), loadOne("backend")]);
+  stats.textContent = `fe+interp+backend loaded; loading full compiler…`;
+  await loadOne("siluc1");
+  await loadOne("wat2wasm");
+  const total = (modules.fe.length + modules.interp.length + modules.backend.length + modules.siluc1.length + modules.wat2wasm.length) / 1e6;
+  stats.textContent = `5 modules loaded (${total.toFixed(2)} MB)`;
+}
+
+readyPromise = boot().catch((e) => {
+  stats.textContent = "load failed: " + (e.message || e);
+});
+
+async function ensureReady() {
+  await readyPromise;
+}
+
+async function compileLL() {
+  await ensureReady();
+  wasmBytes2 = null;
+  run.textContent = "Run ▶";
+  const t0 = performance.now();
+  const stdin = new TextEncoder().encode(src.value);
+  const { done } = await core.runWasm({ wasmBytes: modules.siluc1, stdin });
+  const r = await done;
+  const ms = (performance.now() - t0).toFixed(0);
+  if (r.exitCode !== 0) throw new Error(`compiler exited ${r.exitCode}\n` + new TextDecoder().decode(r.stderr));
+  const text = new TextDecoder().decode(r.stdout);
+  outTitle.textContent = "llvm ir (byte-identical to native output)";
+  out.textContent = text;
+  stats.textContent = `${text.length.toLocaleString()} bytes of .ll in ${ms} ms`;
+}
+
+async function runProgram() {
+  await ensureReady();
+  wasmBytes2 = null;
+  run.textContent = "Run ▶";
+  const t0 = performance.now();
+  const stdin = new TextEncoder().encode(src.value);
+  let fe = await core.runWasm({ wasmBytes: modules.fe, stdin });
+  fe = await fe.done;
+  if (fe.exitCode !== 0) throw new Error("front end exited " + fe.exitCode + "\n" + new TextDecoder().decode(fe.stderr));
+  let it = await core.runWasm({ wasmBytes: modules.interp, stdin: fe.stdout });
+  it = await it.done;
+  const ms = (performance.now() - t0).toFixed(0);
+  outTitle.textContent = "program output (ir interpreter)";
+  out.textContent = new TextDecoder().decode(it.stdout) +
+    (it.stderr.length ? "\n# " + new TextDecoder().decode(it.stderr) : "");
+  stats.textContent = `ran in ${ms} ms (exit ${it.exitCode})`;
+}
+
+async function compileWasm() {
+  await ensureReady();
+  const t0 = performance.now();
+  const stdin = new TextEncoder().encode(src.value);
+  let fe = await core.runWasm({ wasmBytes: modules.fe, stdin });
+  fe = await fe.done;
+  if (fe.exitCode !== 0) throw new Error("front end exited " + fe.exitCode);
+  let be = await core.runWasm({ wasmBytes: modules.backend, stdin: fe.stdout });
+  be = await be.done;
+  if (be.exitCode !== 0) throw new Error("backend exited " + be.exitCode);
+  // wat2wasm: the self-hosted assembler emits the binary as a hex text
+  // stream (Silu strings cannot hold NUL bytes) - decode 2 chars/byte
+  let wa = await core.runWasm({ wasmBytes: modules.wat2wasm, stdin: be.stdout });
+  wa = await wa.done;
+  if (wa.exitCode !== 0) throw new Error("wat2wasm exited " + wa.exitCode + "\n" + new TextDecoder().decode(wa.stderr));
+  const hex = new TextDecoder().decode(wa.stdout).replace(/[^0-9a-fA-F]/g, "");
+  const buffer = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < buffer.length; i++) buffer[i] = parseInt(hex.substr(2 * i, 2), 16);
+  wasmBytes2 = buffer;
+  dl.href = URL.createObjectURL(new Blob([buffer], { type: "application/wasm" }));
+  dl.style.display = "inline";
+  run.textContent = "WASM ▶";
+  const ms = (performance.now() - t0).toFixed(0);
+  return `${buffer.length.toLocaleString()} byte .wasm compiled in ${ms} ms - click ⬇ to download, or press WASM ▶ again to run it`;
+}
+
+async function runWasmProgram() {
+  await ensureReady();
+  const t0 = performance.now();
+  const { done } = await core.runWasm({ wasmBytes: wasmBytes2, stdin: new Uint8Array() });
+  const r = await done;
+  const ms = (performance.now() - t0).toFixed(0);
+  outTitle.textContent = "program output (real wasm compilation)";
+  out.textContent = new TextDecoder().decode(r.stdout) +
+    (r.stderr.length ? "\n# " + new TextDecoder().decode(r.stderr) : "");
+  stats.textContent = `executed in ${ms} ms (exit ${r.exitCode})`;
+}
+
+let wasmBytes2 = null;
+async function guarded(fn) {
+  go.disabled = true;
+  run.disabled = true;
+  try {
+    await fn();
+  } catch (e) {
+    outTitle.textContent = "error";
+    out.textContent = "# " + (e.message || e);
+    stats.textContent = "error";
+  }
+  go.disabled = false;
+  run.disabled = false;
+}
+
+go.addEventListener("click", () => guarded(compileLL));
+run.addEventListener("click", () => guarded(wasmBytes2 ? runWasmProgram : runProgram));
+
+wasmc.addEventListener("click", async () => {
+  wasmc.disabled = true;
+  go.disabled = true;
+  run.disabled = true;
+  try {
+    if (wasmBytes2) {
+      await runWasmProgram();
+    } else {
+      const msg = await compileWasm();
+      outTitle.textContent = "webassembly module (L2 backend)";
+      out.textContent = "# " + msg;
+      stats.textContent = msg;
+      wasmc.textContent = "WASM ▶";
+      wasmc.classList.add("alt");
+    }
+  } catch (e) {
+    outTitle.textContent = "error";
+    out.textContent = "# " + (e.message || e);
+    stats.textContent = "error";
+  }
+  wasmc.disabled = false;
+  go.disabled = false;
+  run.disabled = false;
+});
+</script>
+</body>
+</html>
