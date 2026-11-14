@@ -485,7 +485,9 @@ if (isMain) {
   const files = new Map();
   for (let i = 1; i < argv.length; i++) {
     if (argv[i] === "--file") {
-      const [name, path] = argv[i + 1].split("=");
+      const eq = argv[i + 1].indexOf("=");
+      const name = argv[i + 1].slice(0, eq);
+      const path = argv[i + 1].slice(eq + 1);
       files.set(name, new Uint8Array(readFileSync(path)));
       i++;
     } else if (argv[i] === "--stdin-data") {
